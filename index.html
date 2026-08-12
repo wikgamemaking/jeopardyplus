@@ -310,6 +310,9 @@
   .chat-messages::-webkit-scrollbar{ display:block; width:6px; }
   .chat-messages::-webkit-scrollbar-thumb{ background: var(--line); border-radius:4px; }
   .chat-msg{ display:flex; gap:8px; align-items:flex-start; animation: fadeInUp .25s ease both; }
+  .chat-msg.system{ justify-content:center; text-align:center; color: var(--muted); font-size:12px; padding:2px 0; }
+  .chat-msg.system .chat-msg-system-text{ font-family:'Inter',sans-serif; }
+  .chat-msg.system .chat-msg-system-text b{ color: var(--cyan); font-weight:600; }
   .chat-msg .player-avatar{ width:24px; height:24px; font-size:12px; margin-top:1px; }
   .chat-msg-body{ min-width:0; flex:1; }
   .chat-msg-head{ display:flex; align-items:baseline; gap:6px; }
@@ -527,6 +530,7 @@
   }
   .random-cats-btn:hover{ color: var(--text); border-color: var(--gold); transform: translateY(-1px); }
   .form-error{ color: var(--magenta); font-size:12px; text-align:left; min-height:16px; margin:2px 0 4px; }
+  .build-credit{ text-align:center; font-size:11px; color: var(--muted); opacity:0.6; margin-top:16px; letter-spacing:0.3px; }
   .form-note{ text-align:left; font-size:11.5px; color: var(--muted); margin: 4px 0 18px; line-height:1.4; }
 
   .empty-note{ color:var(--muted); font-size:13px; text-align:center; padding: 8px 0; }
@@ -1094,21 +1098,21 @@ const CATEGORIES = [
       { clue: "Cet insecte social vit en colonies organisées et produit du miel.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FiZWlsbGUgPw==" },
     ] },
     { value: 300, pool: [
-      { clue: "Cet oiseau incapable de voler est le plus rapide sur deux pattes, natif d'Afrique.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2F1dHJ1Y2hlID8=" },
       { clue: "Ce reptile aquatique peut vivre plus de 100 ans et porte une carapace protectrice.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB0b3J0dWUgPw==" },
       { clue: "Ce reptile marin peut vivre plus de 100 ans et pond ses œufs sur les plages où il est né.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB0b3J0dWUgbWFyaW5lID8=" },
       { clue: "Ce grand singe, cousin proche de l'humain, vit principalement en Afrique centrale.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGltcGFuesOpID8=" },
+      { clue: "Ce grand mammifère herbivore porte une ou deux cornes sur le museau et possède une peau très épaisse.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByaGlub2PDqXJvcyA/" },
     ] },
     { value: 400, pool: [
-      { clue: "Ce félin le plus rapide du monde peut atteindre 110 km/h en pleine course.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBndcOpcGFyZCA/" },
-      { clue: "Ce grand singe d'Afrique centrale, le plus proche parent génétique de l'humain, partage environ 98% de son ADN avec nous.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGltcGFuesOpID8=" },
+      { clue: "Ce grand mammifère terrestre possède la plus longue trompe du règne animal et jamais n'oublie, dit-on.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpbMOpcGhhbnQgPw==" },
+      { clue: "Ce mammifère carnivore chasse en meute et est l'ancêtre sauvage du chien domestique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsb3VwID8=" },
       { clue: "Cet amphibien peut régénérer certains de ses membres perdus, comme sa queue ou ses pattes.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBzYWxhbWFuZHJlID8=" },
       { clue: "Ce mammifère marin, l'un des plus grands prédateurs terrestres lorsqu'il est sur la banquise, vit dans l'Arctique.", answer: "UXUnZXN0LWNlIHF1ZSBsJ291cnMgcG9sYWlyZSA/" },
     ] },
     { value: 500, pool: [
       { clue: "Cet animal peut changer de couleur grâce à des cellules appelées chromatophores.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYW3DqWzDqW9uID8=" },
       { clue: "Ce mammifère marin, le plus grand animal ayant jamais existé, communique par des chants pouvant parcourir des centaines de kilomètres.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYWxlaW5lIMOgIGJvc3NlID8=" },
-      { clue: "Cet oiseau ne vole pas et vit exclusivement dans l'hémisphère sud, notamment en Antarctique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtYW5jaG90ID8=" },
+      { clue: "Ce mammifère marin très intelligent utilise l'écholocation pour chasser et communiquer par clics et sifflements.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkYXVwaGluID8=" },
       { clue: "Ce céphalopode marin possède trois cœurs et un sang bleu grâce à l'hémocyanine.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwaWV1dnJlID8=" },
     ] },
   ]},
@@ -1400,6 +1404,70 @@ const CATEGORIES = [
       { clue: "Ce pays d'Océanie, formé de deux îles principales, est situé au sud-est de l'Australie.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBOb3V2ZWxsZS1aw6lsYW5kZSA/" },
     ] },
   ]},
+  { title: "Bande Dessinée", clues: [
+    { value: 100, pool: [
+      { clue: "Ce dessinateur belge a créé le personnage de Tintin en 1929.", answer: "UXVpIGVzdCBIZXJnw6kgPw==" },
+      { clue: "Ce petit guerrier gaulois, créé par Goscinny et Uderzo, boit une potion magique qui lui donne une force surhumaine.", answer: "UXUnZXN0LWNlIHF1J0FzdMOpcml4ID8=" },
+      { clue: "Cette souris est la mascotte emblématique des studios Disney depuis 1928.", answer: "UXUnZXN0LWNlIHF1ZSBNaWNrZXkgTW91c2UgPw==" },
+      { clue: "Ce jeune reporter à la houppette voyage à travers le monde accompagné de son chien Milou.", answer: "UXVpIGVzdCBUaW50aW4gPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce village peuplé d'irréductibles Gaulois résiste encore et toujours à l'envahisseur romain dans la bande dessinée d'Uderzo et Goscinny.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB2aWxsYWdlIGQnQXN0w6lyaXggPw==" },
+      { clue: "Ce dessinateur belge a créé le personnage maladroit de Gaston Lagaffe.", answer: "UXVpIGVzdCBBbmRyw6kgRnJhbnF1aW4gPw==" },
+      { clue: "Ce terme japonais désigne les bandes dessinées originaires du Japon.", answer: "UXUnZXN0LWNlIHF1J3VuIG1hbmdhID8=" },
+      { clue: "Ce cow-boy solitaire, qui tire plus vite que son ombre, est accompagné de son cheval Jolly Jumper.", answer: "UXVpIGVzdCBMdWNreSBMdWtlID8=" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce scénariste américain a cocréé Spider-Man, les X-Men et de nombreux autres super-héros Marvel.", answer: "UXVpIGVzdCBTdGFuIExlZSA/" },
+      { clue: "Ce héros milliardaire de Gotham City combat le crime déguisé en chauve-souris.", answer: "UXVpIGVzdCBCYXRtYW4gPw==" },
+      { clue: "Ce festival français, qui se tient chaque année à Angoulême, est le plus grand rendez-vous de la BD en Europe.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBGZXN0aXZhbCBkJ0FuZ291bMOqbWUgPw==" },
+      { clue: "Ce dessinateur américain a créé les Peanuts, mettant en scène Charlie Brown et son chien Snoopy.", answer: "UXVpIGVzdCBDaGFybGVzIFNjaHVseiA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce romancier graphique britannique a écrit Watchmen et V pour Vendetta.", answer: "UXVpIGVzdCBBbGFuIE1vb3JlID8=" },
+      { clue: "Ce dessinateur japonais, créateur d'Astro Boy, est surnommé le père du manga.", answer: "UXVpIGVzdCBPc2FtdSBUZXp1a2EgPw==" },
+      { clue: "Cette bande dessinée d'Art Spiegelman, qui représente les Juifs en souris et les nazis en chats, a reçu le prix Pulitzer en 1992.", answer: "UXUnZXN0LWNlIHF1ZSBNYXVzID8=" },
+      { clue: "Cette autrice iranienne a raconté son enfance pendant la révolution islamique dans la bande dessinée Persepolis.", answer: "UXVpIGVzdCBNYXJqYW5lIFNhdHJhcGkgPw==" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce super-héros créé par Jerry Siegel et Joe Shuster en 1938 est considéré comme le premier super-héros de l'histoire des comics.", answer: "UXVpIGVzdCBTdXBlcm1hbiA/" },
+      { clue: "Ce dessinateur suisse du XIXe siècle est considéré comme l'inventeur de la bande dessinée moderne.", answer: "UXVpIGVzdCBSb2RvbHBoZSBUw7ZwZmZlciA/" },
+      { clue: "Ce mangaka japonais a créé Akira, une œuvre culte de science-fiction devenue un film d'animation en 1988.", answer: "UXVpIGVzdCBLYXRzdWhpcm8gT3RvbW8gPw==" },
+      { clue: "Ce dessinateur américain, créateur du Spirit, a popularisé le terme « roman graphique » et donne son nom au plus prestigieux prix de la bande dessinée américaine.", answer: "UXVpIGVzdCBXaWxsIEVpc25lciA/" },
+    ] },
+  ]},
+  { title: "Philosophie", clues: [
+    { value: 100, pool: [
+      { clue: "Ce philosophe grec de l'Antiquité, maître de Platon, est célèbre pour la maïeutique et n'a rien écrit lui-même.", answer: "UXVpIGVzdCBTb2NyYXRlID8=" },
+      { clue: "Ce philosophe français est l'auteur de la célèbre formule « Je pense donc je suis ».", answer: "UXVpIGVzdCBSZW7DqSBEZXNjYXJ0ZXMgPw==" },
+      { clue: "Cette discipline philosophique interroge la nature du bien et du mal, du juste et de l'injuste.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpdGhpcXVlID8=" },
+      { clue: "Ce philosophe grec, élève de Socrate, a fondé l'Académie à Athènes.", answer: "UXVpIGVzdCBQbGF0b24gPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce philosophe allemand du XIXe siècle a proclamé que Dieu est mort et développé le concept du surhomme.", answer: "UXVpIGVzdCBGcmllZHJpY2ggTmlldHpzY2hlID8=" },
+      { clue: "Ce philosophe allemand des Lumières est l'auteur de la Critique de la raison pure.", answer: "UXVpIGVzdCBFbW1hbnVlbCBLYW50ID8=" },
+      { clue: "Ce courant philosophique de la Grèce antique prône l'acceptation sereine du destin et la maîtrise des passions.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzdG/Dr2Npc21lID8=" },
+      { clue: "Ce mythe philosophique de Platon compare notre perception du monde à des prisonniers regardant des ombres sur un mur.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FsbMOpZ29yaWUgZGUgbGEgY2F2ZXJuZSA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce philosophe et écrivain français, figure de l'existentialisme, a affirmé que l'existence précède l'essence.", answer: "UXVpIGVzdCBKZWFuLVBhdWwgU2FydHJlID8=" },
+      { clue: "Cette philosophe française, autrice du Deuxième Sexe, est une figure majeure du féminisme du XXe siècle.", answer: "UXVpIGVzdCBTaW1vbmUgZGUgQmVhdXZvaXIgPw==" },
+      { clue: "Ce penseur chinois de l'Antiquité a fondé une philosophie morale et sociale fondée sur le respect et l'harmonie.", answer: "UXVpIGVzdCBDb25mdWNpdXMgPw==" },
+      { clue: "Ce courant philosophique soutient que toute connaissance provient de l'expérience sensible, à l'opposé du rationalisme.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VtcGlyaXNtZSA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce philosophe allemand a développé la méthode dialectique fondée sur la thèse, l'antithèse et la synthèse.", answer: "UXVpIGVzdCBHZW9yZyBXaWxoZWxtIEZyaWVkcmljaCBIZWdlbCA/" },
+      { clue: "Ce philosophe néerlandais d'origine judéo-portugaise a identifié Dieu à la nature dans son ouvrage l'Éthique.", answer: "UXVpIGVzdCBCYXJ1Y2ggU3Bpbm96YSA/" },
+      { clue: "Ce philosophe genevois des Lumières est l'auteur du Contrat social et pensait que l'homme est bon par nature.", answer: "UXVpIGVzdCBKZWFuLUphY3F1ZXMgUm91c3NlYXUgPw==" },
+      { clue: "Ce philosophe et économiste allemand, coauteur du Manifeste du parti communiste, a théorisé la lutte des classes.", answer: "UXVpIGVzdCBLYXJsIE1hcnggPw==" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce philosophe autrichien a affirmé que les limites de mon langage signifient les limites de mon monde.", answer: "UXVpIGVzdCBMdWR3aWcgV2l0dGdlbnN0ZWluID8=" },
+      { clue: "Ce philosophe allemand du XXe siècle a exploré la question de l'être dans son ouvrage majeur Être et Temps.", answer: "UXVpIGVzdCBNYXJ0aW4gSGVpZGVnZ2VyID8=" },
+      { clue: "Ce philosophe français a analysé les rapports entre pouvoir et savoir, notamment dans Surveiller et punir.", answer: "UXVpIGVzdCBNaWNoZWwgRm91Y2F1bHQgPw==" },
+      { clue: "Ce philosophe andalou du XIIe siècle a rédigé d'importants commentaires sur l'œuvre d'Aristote et influencé la pensée médiévale européenne.", answer: "UXVpIGVzdCBBdmVycm/DqHMgPw==" },
+    ] },
+  ]},
 ];
 
 const ME_KEY = 'duelquiz_me_v3';
@@ -1580,6 +1648,7 @@ async function mutateState(mutator){
 }
 
 async function ensureJoined(rawConfig){
+  let nameConflict = false;
   const s = await fsTransactRoom(room, (current) => {
     let next = migrateState(current);
     const isValid = next && Array.isArray(next.answered) && next.answered.length === CATEGORIES.length &&
@@ -1592,11 +1661,20 @@ async function ensureJoined(rawConfig){
     }
     if(typeof next.round !== 'number') next.round = 0;
     if(!next.scores[me.id]){
+      const wantedName = (me.name || '').trim().toLowerCase();
+      const taken = Object.entries(next.scores).some(([id, p]) => id !== me.id && (p.name || '').trim().toLowerCase() === wantedName);
+      if(taken){
+        nameConflict = true;
+        return undefined; // abort: no write, name already used by another player in this room
+      }
       next.scores[me.id] = { name: me.name, color: me.color, avatar: me.avatar, score: 0 };
+      if(!Array.isArray(next.chat)) next.chat = [];
+      next.chat.push({ id: uid(), type: 'system', playerId: me.id, name: me.name, text: 'a rejoint la partie', ts: Date.now() });
+      if(next.chat.length > 60) next.chat = next.chat.slice(-60);
     }
     return next;
   });
-  return s;
+  return { state: s, nameConflict };
 }
 
 function escapeHtml(str){
@@ -2052,14 +2130,19 @@ function renderChat(){
   if(!state){ el.innerHTML = ''; chatSig = null; return; }
   const msgs = Array.isArray(state.chat) ? state.chat : [];
 
-  let hasNewFromOther = false;
+  let hasNewChatFromOther = false;
+  let hasNewJoin = false;
   msgs.forEach(m => {
     if(!seenChatIds.has(m.id)){
       seenChatIds.add(m.id);
-      if(m.playerId !== me.id) hasNewFromOther = true;
+      if(m.playerId !== me.id){
+        if(m.type === 'system') hasNewJoin = true;
+        else hasNewChatFromOther = true;
+      }
     }
   });
-  if(hasNewFromOther) playSound('chat');
+  if(hasNewJoin) playSound('join');
+  else if(hasNewChatFromOther) playSound('chat');
 
   const sig = msgs.map(m => m.id).join(',');
   if(chatSig === sig) return;
@@ -2069,6 +2152,9 @@ function renderChat(){
     el.innerHTML = '<div class="empty-note">Aucun message pour l\'instant. Dites bonjour 👋</div>';
   } else {
     el.innerHTML = msgs.map(m => {
+      if(m.type === 'system'){
+        return '<div class="chat-msg system"><span class="chat-msg-system-text"><b>' + escapeHtml(m.name) + '</b> ' + escapeHtml(m.text) + '</span></div>';
+      }
       const isMe = m.playerId === me.id;
       return '<div class="chat-msg">' +
         '<span class="player-avatar" style="background:' + m.color + '">' + escapeHtml(m.avatar || (m.name || '?').charAt(0).toUpperCase()) + '</span>' +
@@ -2389,6 +2475,7 @@ function showJoinPrompt(){
       '</div>' +
       '<div class="form-error" id="formError"></div>' +
       '<button class="btn gold" id="joinBtn" style="width:100%;">Rejoindre la salle</button>' +
+      '<div class="build-credit">Built by frowst — 2026</div>' +
     '</div></div>';
 
   const nameInput = document.getElementById('nameInput');
@@ -2519,7 +2606,11 @@ function showJoinPrompt(){
     me = { id, name, color: profile.color, avatar: profile.avatar, lastRoom: roomCode };
     await saveMe(me);
     room = roomCode;
-    await init({ mode: selectedMode, roundsCount: selectedRounds, categoryIndices: selectedCategoryIndices.slice() });
+    const result = await init({ mode: selectedMode, roundsCount: selectedRounds, categoryIndices: selectedCategoryIndices.slice() });
+    if(result && result.nameConflict){
+      const freshErr = document.getElementById('formError');
+      if(freshErr) freshErr.textContent = 'Ce pseudo est déjà pris dans cette salle. Choisissez-en un autre.';
+    }
   };
   document.getElementById('joinBtn').addEventListener('click', doJoin);
   nameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') doJoin(); });
@@ -2535,12 +2626,19 @@ async function init(rawConfig){
     showJoinPrompt();
     return;
   }
-  state = await ensureJoined(rawConfig || { mode: 'duel', roundsCount: 1, categoryIndices: CATEGORIES.map((_,i)=>i).slice(0, DEFAULT_CATEGORIES) });
+  const result = await ensureJoined(rawConfig || { mode: 'duel', roundsCount: 1, categoryIndices: CATEGORIES.map((_,i)=>i).slice(0, DEFAULT_CATEGORIES) });
+  if(result.nameConflict){
+    room = null;
+    showJoinPrompt();
+    return { nameConflict: true };
+  }
+  state = result.state;
   Object.entries(state.scores).forEach(([id, p]) => { prevScores[id] = p.score; });
   (state.reactions || []).forEach(r => seenReactionIds.add(r.id));
   (state.chat || []).forEach(m => seenChatIds.add(m.id));
   renderAll();
   pollLoop();
+  return { nameConflict: false };
 }
 
 document.getElementById('resetBtn').addEventListener('click', resetGame);
