@@ -563,6 +563,7 @@
 <body>
 <div class="bg-glow"><span></span><span></span><span></span></div>
 <div id="root">
+  <div id="fbErrorBanner" style="display:none; background:#3a1420; border:1px solid var(--magenta); color:#ffb3cf; border-radius:10px; padding:12px 16px; margin-bottom:14px; font-size:13.5px; line-height:1.4;"></div>
   <div class="brand">
     <div>
       <h1>JEOPARDY+</h1>
@@ -636,12 +637,23 @@ const db = getFirestore(fbApp);
 async function fsGetRoom(roomCode){
   try{
     const snap = await getDoc(doc(db, 'rooms', roomCode));
+    window.__fsClearError();
     return snap.exists() ? snap.data() : null;
-  }catch(e){ console.error('firestore get failed', e); return null; }
+  }catch(e){ console.error('firestore get failed', e); showFbError(e); return null; }
 }
 async function fsSetRoom(roomCode, value){
-  try{ await setDoc(doc(db, 'rooms', roomCode), value); }catch(e){ console.error('firestore set failed', e); }
+  try{ await setDoc(doc(db, 'rooms', roomCode), value); window.__fsClearError(); }catch(e){ console.error('firestore set failed', e); showFbError(e); }
 }
+function showFbError(e){
+  const el = document.getElementById('fbErrorBanner');
+  if(!el) return;
+  el.style.display = 'block';
+  el.textContent = 'Connexion à la base de données impossible (' + (e && e.code ? e.code : e) + '). Vérifiez les règles Firestore et la connexion réseau.';
+}
+window.__fsClearError = () => {
+  const el = document.getElementById('fbErrorBanner');
+  if(el) el.style.display = 'none';
+};
 
 const PALETTE = ['#e24b4a','#f27059','#ff8a3d','#ffcf5c','#f2b705','#639922','#8de37a','#6ee7b7','#33e6cc','#4dd0e1','#5ad1ff','#7f77dd','#c9a8ff','#c084fc','#ffa8d5','#ff3d81'];
 const EMOJI_AVATARS = ['🦊','🐼','🐸','🦁','🐙','🦄','🐳','🦉','🐝','🐺','🦋','🦖','🐧','🐨','🦈'];
