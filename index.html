@@ -617,7 +617,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBFlEl-7aT8IA5jIKE4eZJOAMBg8lW8Zi0",
@@ -649,6 +649,28 @@ async function fsGetRoom(roomCode){
 }
 async function fsSetRoom(roomCode, value){
   try{ await setDoc(doc(db, 'rooms', roomCode), { json: JSON.stringify(value) }); window.__fsClearError(); }catch(e){ console.error('firestore set failed', e); showFbError(e); }
+}
+// Atomic read-modify-write: two players joining (or acting) within the same
+// instant both read the doc, mutate it, and write it back — without this,
+// whoever writes last silently overwrites the other's change (this is exactly
+// what caused players to appear "alone" when joining at the same time).
+// updater receives the current parsed state (or null if the doc doesn't exist
+// yet) and returns the new state to persist.
+async function fsTransactRoom(roomCode, updater){
+  const ref = doc(db, 'rooms', roomCode);
+  let result;
+  try{
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const current = snap.exists() && snap.data().json ? JSON.parse(snap.data().json) : null;
+      const next = updater(current);
+      if(next === undefined){ result = current; return; } // no-op: nothing to write
+      result = next;
+      tx.set(ref, { json: JSON.stringify(next) });
+    });
+    window.__fsClearError();
+  }catch(e){ console.error('firestore transaction failed', e); showFbError(e); }
+  return result;
 }
 function showFbError(e){
   const el = document.getElementById('fbErrorBanner');
@@ -1538,39 +1560,42 @@ function migrateState(s){
   return s;
 }
 
-// Every action that changes shared game state goes through here: it fetches the
-// very latest state from storage right before mutating and saving, instead of
-// mutating a possibly-stale local copy. That closes almost all of the race
-// window that used to cause one player's action to silently overwrite (and
-// appear to "roll back") another's.
+// Every action that changes shared game state goes through here. It uses a
+// Firestore transaction so the read-mutate-write is atomic — critical for a
+// buzzer game, since two players can buzz in at the very same instant and
+// only a true atomic transaction guarantees exactly one of them wins.
 async function mutateState(mutator){
   if(!state) return false;
-  const fresh = migrateState(await loadState()) || state;
-  const applied = mutator(fresh);
-  state = fresh;
-  renderAll();
-  if(applied){
-    await saveState(state);
+  let applied = false;
+  const next = await fsTransactRoom(room, (current) => {
+    const fresh = migrateState(current) || state;
+    applied = mutator(fresh);
+    return applied ? fresh : undefined;
+  });
+  if(next){
+    state = next;
+    renderAll();
   }
   return applied;
 }
 
 async function ensureJoined(rawConfig){
-  let s = migrateState(await loadState());
-  const isValid = s && Array.isArray(s.answered) && s.answered.length === CATEGORIES.length &&
-                   s.config && Array.isArray(s.config.rounds) && s.config.rounds.length > 0;
-  if(!isValid){
-    const rounds = splitRounds(rawConfig.categoryIndices, rawConfig.roundsCount);
-    const fresh = freshBoardState({ mode: rawConfig.mode, rounds });
-    if(s && s.scores) fresh.scores = s.scores;
-    s = fresh;
-    await saveState(s);
-  }
-  if(typeof s.round !== 'number') s.round = 0;
-  if(!s.scores[me.id]){
-    s.scores[me.id] = { name: me.name, color: me.color, avatar: me.avatar, score: 0 };
-    await saveState(s);
-  }
+  const s = await fsTransactRoom(room, (current) => {
+    let next = migrateState(current);
+    const isValid = next && Array.isArray(next.answered) && next.answered.length === CATEGORIES.length &&
+                     next.config && Array.isArray(next.config.rounds) && next.config.rounds.length > 0;
+    if(!isValid){
+      const rounds = splitRounds(rawConfig.categoryIndices, rawConfig.roundsCount);
+      const fresh = freshBoardState({ mode: rawConfig.mode, rounds });
+      if(next && next.scores) fresh.scores = next.scores;
+      next = fresh;
+    }
+    if(typeof next.round !== 'number') next.round = 0;
+    if(!next.scores[me.id]){
+      next.scores[me.id] = { name: me.name, color: me.color, avatar: me.avatar, score: 0 };
+    }
+    return next;
+  });
   return s;
 }
 
