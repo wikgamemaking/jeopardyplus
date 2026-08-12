@@ -614,7 +614,35 @@
   <button type="button" class="reaction-btn" data-emoji="🎉">🎉</button>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBFlEl-7aT8IA5jIKE4eZJOAMBg8lW8Zi0",
+  authDomain: "jeopardy-plus.firebaseapp.com",
+  projectId: "jeopardy-plus",
+  storageBucket: "jeopardy-plus.firebasestorage.app",
+  messagingSenderId: "337565844628",
+  appId: "1:337565844628:web:87a3f6c9538636601a6081"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+// Shared room state now lives in Firestore (collection "rooms", one doc per room
+// code) so different browsers/devices actually see each other's moves. Personal
+// per-device data (the "me" profile) stays in localStorage — it never needs to
+// be shared, so there's no reason to burn a Firestore read/write on it.
+async function fsGetRoom(roomCode){
+  try{
+    const snap = await getDoc(doc(db, 'rooms', roomCode));
+    return snap.exists() ? snap.data() : null;
+  }catch(e){ console.error('firestore get failed', e); return null; }
+}
+async function fsSetRoom(roomCode, value){
+  try{ await setDoc(doc(db, 'rooms', roomCode), value); }catch(e){ console.error('firestore set failed', e); }
+}
+
 const PALETTE = ['#e24b4a','#f27059','#ff8a3d','#ffcf5c','#f2b705','#639922','#8de37a','#6ee7b7','#33e6cc','#4dd0e1','#5ad1ff','#7f77dd','#c9a8ff','#c084fc','#ffa8d5','#ff3d81'];
 const EMOJI_AVATARS = ['🦊','🐼','🐸','🦁','🐙','🦄','🐳','🦉','🐝','🐺','🦋','🦖','🐧','🐨','🦈'];
 const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1460,28 +1488,25 @@ function newActive(cat, row, autoBuzzId){
 
 async function loadMe(){
   try{
-    const r = await window.storage.get(ME_KEY, false);
-    if(r && r.value) return JSON.parse(r.value);
+    const raw = localStorage.getItem(ME_KEY);
+    if(raw) return JSON.parse(raw);
   }catch(e){}
   return null;
 }
 
 async function saveMe(m){
-  try{ await window.storage.set(ME_KEY, JSON.stringify(m), false); }catch(e){ console.error('save me failed', e); }
+  try{ localStorage.setItem(ME_KEY, JSON.stringify(m)); }catch(e){ console.error('save me failed', e); }
 }
 
 async function loadState(){
-  try{
-    const r = await window.storage.get(stateKey(), true);
-    if(r && r.value) return JSON.parse(r.value);
-  }catch(e){}
-  return null;
+  const data = await fsGetRoom(room);
+  return data || null;
 }
 
 let suppressPollUntil = 0;
 async function saveState(s){
   suppressPollUntil = Date.now() + 1200;
-  try{ await window.storage.set(stateKey(), JSON.stringify(s), true); }catch(e){ console.error('save state failed', e); }
+  await fsSetRoom(room, s);
 }
 
 // Fills in fields that may be missing on state loaded from an older session,
