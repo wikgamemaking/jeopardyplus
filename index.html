@@ -634,15 +634,21 @@ const db = getFirestore(fbApp);
 // code) so different browsers/devices actually see each other's moves. Personal
 // per-device data (the "me" profile) stays in localStorage — it never needs to
 // be shared, so there's no reason to burn a Firestore read/write on it.
+// Firestore doesn't allow arrays nested directly inside arrays (this game's
+// state has array-of-array fields like `answered` and `resolved`), so the
+// whole state is serialized to a JSON string and stored under one field
+// instead of being written as native Firestore fields.
 async function fsGetRoom(roomCode){
   try{
     const snap = await getDoc(doc(db, 'rooms', roomCode));
     window.__fsClearError();
-    return snap.exists() ? snap.data() : null;
+    if(!snap.exists()) return null;
+    const raw = snap.data();
+    return raw && raw.json ? JSON.parse(raw.json) : null;
   }catch(e){ console.error('firestore get failed', e); showFbError(e); return null; }
 }
 async function fsSetRoom(roomCode, value){
-  try{ await setDoc(doc(db, 'rooms', roomCode), value); window.__fsClearError(); }catch(e){ console.error('firestore set failed', e); showFbError(e); }
+  try{ await setDoc(doc(db, 'rooms', roomCode), { json: JSON.stringify(value) }); window.__fsClearError(); }catch(e){ console.error('firestore set failed', e); showFbError(e); }
 }
 function showFbError(e){
   const el = document.getElementById('fbErrorBanner');
