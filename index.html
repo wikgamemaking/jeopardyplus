@@ -1528,14 +1528,14 @@ function newActive(cat, row, autoBuzzId){
 
 async function loadMe(){
   try{
-    const raw = localStorage.getItem(ME_KEY);
+    const raw = sessionStorage.getItem(ME_KEY);
     if(raw) return JSON.parse(raw);
   }catch(e){}
   return null;
 }
 
 async function saveMe(m){
-  try{ localStorage.setItem(ME_KEY, JSON.stringify(m)); }catch(e){ console.error('save me failed', e); }
+  try{ sessionStorage.setItem(ME_KEY, JSON.stringify(m)); }catch(e){ console.error('save me failed', e); }
 }
 
 async function loadState(){
