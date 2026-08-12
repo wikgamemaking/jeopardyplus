@@ -1,0 +1,2494 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeopardy+</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --bg:#0b0a17;
+    --panel:#191433;
+    --panel-2:#201a44;
+    --line: rgba(242,183,5,0.15);
+    --gold:#f2b705;
+    --magenta:#ff3d81;
+    --cyan:#33e6cc;
+    --purple:#7f77dd;
+    --text:#f5f3ff;
+    --muted:#9089b8;
+  }
+
+  *{ box-sizing: border-box; }
+  *{ scrollbar-width: none; -ms-overflow-style: none; }
+  *::-webkit-scrollbar{ display:none; width:0; height:0; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size:16px;
+    min-height:100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .bg-glow{
+    position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  }
+  .bg-glow span{
+    position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.11;
+  }
+  .bg-glow span:nth-child(1){ width: 380px; height: 380px; background: var(--magenta); top: -120px; left: -100px; animation: drift1 30s ease-in-out infinite; }
+  .bg-glow span:nth-child(2){ width: 340px; height: 340px; background: var(--gold); bottom: -140px; right: -80px; animation: drift2 34s ease-in-out infinite; }
+  .bg-glow span:nth-child(3){ width: 260px; height: 260px; background: var(--cyan); top: 40%; left: 60%; animation: drift3 38s ease-in-out infinite; }
+  @keyframes drift1{ 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(50px,60px); } }
+  @keyframes drift2{ 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(-55px,-40px); } }
+  @keyframes drift3{ 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(-30px,30px) scale(1.1); } }
+
+  @keyframes fadeInUp{ from{ opacity:0; transform: translateY(14px); } to{ opacity:1; transform: translateY(0); } }
+  @keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes popIn{ from{ opacity:0; transform: scale(0.9); } to{ opacity:1; transform: scale(1); } }
+  @keyframes modalPop{ from{ opacity:0; transform: scale(0.9) translateY(8px); } to{ opacity:1; transform: scale(1) translateY(0); } }
+  @keyframes glowPulse{
+    0%,100%{ box-shadow: 0 0 0 0 rgba(242,183,5,0.4); border-color: var(--gold); }
+    50%{ box-shadow: 0 0 0 6px rgba(242,183,5,0); border-color: var(--magenta); }
+  }
+  @keyframes cellDone{ from{ transform: scale(1); } 40%{ transform: scale(0.9) rotateY(90deg); opacity:0.3; } to{ transform: scale(1) rotateY(0); opacity:1; } }
+  @keyframes shimmerTitle{ 0%{ background-position: 0% 50%; } 100%{ background-position: 200% 50%; } }
+  @keyframes confettiFall{
+    0%{ transform: translateY(-20px) rotate(0deg); opacity:1; }
+    100%{ transform: translateY(220px) rotate(540deg); opacity:0; }
+  }
+  @keyframes scorePop{
+    0%{ background: rgba(242,183,5,0.35); transform: scale(1); }
+    50%{ transform: scale(1.06); }
+    100%{ background: transparent; transform: scale(1); }
+  }
+  @keyframes pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(255,61,129,0.35); }
+    70%{ box-shadow: 0 0 0 16px rgba(255,61,129,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(255,61,129,0); }
+  }
+  @keyframes skeletonShine{ 0%{ background-position: 200% 0; } 100%{ background-position: -200% 0; } }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  #root{ max-width: 1220px; margin: 0 auto; padding: 22px 16px 60px; }
+
+  .brand{
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap: wrap; gap:12px;
+    margin-bottom: 16px;
+    animation: fadeInUp .5s ease both;
+  }
+  .brand h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size: 39px;
+    letter-spacing: 0.3px;
+    margin:0;
+    background: linear-gradient(100deg, var(--gold), var(--magenta), var(--cyan), var(--gold));
+    background-size: 300% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmerTitle 11s linear infinite;
+  }
+  .brand .tag{ color:var(--muted); font-size:15px; margin-top:3px; }
+  .me-badge{
+    display:flex; align-items:center; gap:9px;
+    background: var(--panel); border:1px solid var(--line);
+    border-radius: 999px; padding: 7px 18px 7px 7px;
+    font-size:15px; cursor:pointer;
+    transition: border-color .2s;
+  }
+  .me-badge:hover{ border-color: var(--gold); }
+
+  .player-avatar{
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:15px; font-weight:700; color:#1a1400;
+    flex-shrink:0;
+  }
+
+  .room-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:11px; flex-wrap:wrap;
+    background: var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding: 18px; margin-bottom: 14px; font-size:15px; color: var(--muted);
+    animation: fadeInUp .5s ease .08s both;
+  }
+  .room-left, .room-right{ display:flex; align-items:center; gap:11px; flex-wrap:wrap; }
+  .room-code{
+    font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:18px;
+    color: var(--gold); letter-spacing:2px; background: var(--panel-2);
+    padding: 6px 12px; border-radius:6px;
+  }
+  .mode-pill{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:11px;
+    text-transform:uppercase; letter-spacing:0.4px;
+    padding:4px 10px; border-radius:999px;
+    background: rgba(51,230,204,0.12); color: var(--cyan); border:1px solid rgba(51,230,204,0.3);
+  }
+  .mode-pill.duel{ background: rgba(255,61,129,0.12); color: var(--magenta); border-color: rgba(255,61,129,0.3); }
+  .progress-text{ font-family:'IBM Plex Mono', monospace; color: var(--cyan); font-size:13px; }
+  .copy-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    background:transparent; border:1px solid var(--line); color:var(--muted);
+    border-radius:7px; padding:6px 12px 6px 9px; font-size:12px; cursor:pointer;
+    transition: all .15s;
+  }
+  .copy-btn svg{ flex-shrink:0; width:14px; height:14px; }
+  .copy-btn:hover{ color: var(--text); border-color: var(--gold); transform: translateY(-1px); }
+  .copy-btn.copied{ color: var(--cyan); border-color: var(--cyan); }
+  .room-code-wrap{ position:relative; display:inline-flex; }
+  .room-code-hidden{
+    filter: blur(6px);
+    transition: filter .18s ease;
+    cursor: pointer;
+  }
+  .room-code-hidden:hover, .room-code-hidden:focus-within{ filter: blur(0); }
+  .room-code-reveal-hint{
+    position:absolute; left:50%; bottom:-17px; transform: translateX(-50%);
+    font-size:10px; color: var(--muted); white-space:nowrap; pointer-events:none;
+    opacity:0; transition: opacity .15s;
+  }
+  .room-code-wrap:hover .room-code-reveal-hint{ opacity:1; }
+  .leave-link{ color: var(--muted); font-size:12px; cursor:pointer; text-decoration:underline; }
+  .leave-link:hover{ color: var(--text); }
+
+  .round-banner{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    margin-bottom: 12px; min-height: 34px;
+    animation: fadeInUp .5s ease .1s both;
+  }
+  .round-label{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:13px;
+    text-transform:uppercase; letter-spacing:0.4px; color: var(--muted);
+  }
+  .round-complete{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:13px;
+    color: var(--gold);
+  }
+  .round-next-btn{ padding:7px 16px; font-size:13px; }
+
+  .layout{ display:grid; grid-template-columns: 1fr 260px; gap: 22px; align-items:start; }
+  @media (max-width: 860px){ .layout{ grid-template-columns: 1fr; } }
+
+  .board-wrap{ overflow-x:auto; position: relative; animation: fadeInUp .5s ease .12s both; scrollbar-width: thin; padding-bottom: 4px; text-align:center; }
+  .board-wrap::-webkit-scrollbar{ display:block; height:8px; }
+  .board-wrap::-webkit-scrollbar-thumb{ background: var(--line); border-radius:4px; }
+  .board-wrap::-webkit-scrollbar-thumb:hover{ background: var(--gold); }
+  .board.compact .cat{ font-size:12px; padding:12px 6px; }
+  .board.compact .cell{ font-size:21px; height:88px; }
+  .board{
+    display:inline-grid;
+    gap:7px;
+    perspective: 800px;
+    flex-shrink:0;
+    text-align:left;
+  }
+  .cat{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    text-align:center;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--accent, var(--gold));
+    border-radius:9px;
+    padding: 16px 9px;
+    letter-spacing:0.3px;
+    text-transform: uppercase;
+    line-height:1.3;
+    opacity:0;
+    animation: popIn .4s ease forwards;
+  }
+  .cell{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius:9px;
+    height: 100px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size: 27px;
+    color: var(--gold);
+    cursor:pointer;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+    opacity:0;
+    animation: popIn .35s ease forwards;
+  }
+  .cell:hover{ background: var(--panel-2); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
+  .cell:active{ transform: translateY(0) scale(0.96); }
+  .cell.done{
+    color: var(--muted);
+    background: transparent;
+    border-style:dashed;
+    cursor:default;
+    opacity:.35 !important;
+    animation: cellDone .45s ease;
+  }
+  .cell.done:hover{ transform:none; background:transparent; box-shadow:none; }
+  .cell.active-cell{
+    animation: glowPulse 1.5s ease-in-out infinite;
+  }
+
+  .skeleton-block{
+    background: linear-gradient(90deg, var(--panel) 25%, var(--panel-2) 50%, var(--panel) 75%) !important;
+    background-size:200% 100% !important;
+    animation: skeletonShine 1.4s ease-in-out infinite !important;
+    color: transparent !important;
+    cursor: default !important;
+  }
+  .skel-row{ height:38px; border-radius:7px; margin-bottom:9px; }
+
+  .board-lock{
+    position:absolute; inset:0;
+    background: rgba(9,7,20,0.88);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    border-radius:12px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; gap:10px; padding:24px; z-index:5;
+    animation: fadeIn .3s ease;
+  }
+  .lock-icon{ font-size:30px; }
+  .lock-title{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:17px; }
+  .lock-sub{ color: var(--muted); font-size:13px; max-width:320px; }
+  .lock-sub b{ color: var(--gold); font-family:'IBM Plex Mono', monospace; letter-spacing:1px; }
+
+  .sidebar{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:13px;
+    padding:18px;
+    animation: fadeInUp .5s ease .16s both;
+  }
+  .sidebar h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:16px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color: var(--muted);
+    margin: 0 0 13px;
+  }
+  .player-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size:16px;
+    border-radius:6px;
+  }
+  .player-row:last-child{ border-bottom:none; }
+  .player-row.leader{ border-left: 3px solid var(--gold); padding-left:11px; }
+  .player-name{ display:flex; align-items:center; gap:9px; min-width:0; }
+  .player-name > span:last-child{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .player-rank{ width:14px; flex-shrink:0; color: var(--muted); font-family:'IBM Plex Mono', monospace; font-size:12px; }
+  .you-tag{ color: var(--muted); font-size:11px; font-weight:400; }
+  .player-score{ font-family:'IBM Plex Mono', monospace; font-weight:600; color: var(--gold); border-radius:4px; padding: 2px 7px; flex-shrink:0; }
+  .player-score.pop{ animation: scorePop .7s ease; }
+  .reset-btn{
+    margin-top:15px; width:100%;
+    background:transparent; color: var(--muted);
+    border:1px solid var(--line); border-radius:8px;
+    padding:9px; font-size:12px; cursor:pointer;
+    transition: all .15s;
+  }
+  .reset-btn:hover{ color: var(--text); border-color: var(--gold); transform: translateY(-1px); }
+
+  .chat-section{ margin-top:20px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.06); }
+  .chat-section h2{ margin-bottom:10px; }
+  .chat-messages{
+    display:flex; flex-direction:column; gap:9px;
+    min-height:220px; max-height:440px; overflow-y:auto; padding-right:2px; margin-bottom:10px;
+    scrollbar-width: thin;
+  }
+  .chat-messages::-webkit-scrollbar{ display:block; width:6px; }
+  .chat-messages::-webkit-scrollbar-thumb{ background: var(--line); border-radius:4px; }
+  .chat-msg{ display:flex; gap:8px; align-items:flex-start; animation: fadeInUp .25s ease both; }
+  .chat-msg .player-avatar{ width:24px; height:24px; font-size:12px; margin-top:1px; }
+  .chat-msg-body{ min-width:0; flex:1; }
+  .chat-msg-head{ display:flex; align-items:baseline; gap:6px; }
+  .chat-msg-name{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:12px; color: var(--text); }
+  .chat-msg-name.me{ color: var(--gold); }
+  .chat-msg-time{ font-size:10px; color: var(--muted); }
+  .chat-msg-text{ font-size:13.5px; line-height:1.4; color: var(--text); word-break:break-word; white-space:pre-wrap; }
+  .chat-input-row{ display:flex; gap:7px; }
+  .chat-input-row input{
+    flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--line);
+    background: var(--panel-2); color:var(--text); font-size:13.5px;
+    font-family:'Inter',sans-serif;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .chat-input-row input:focus{ outline:none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,183,5,0.15); }
+  .chat-input-row .btn{ padding:9px 14px; font-size:15px; flex-shrink:0; }
+
+  .overlay{
+    position: fixed; inset:0;
+    background: rgba(8,6,20,0.82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    z-index: 50; padding: 20px;
+    animation: fadeIn .25s ease;
+  }
+  .modal{
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 36px;
+    width: 100%; max-width: 600px;
+    max-height: 90vh; overflow-y: auto;
+    text-align:center;
+    animation: modalPop .3s cubic-bezier(.2,.8,.3,1.2);
+  }
+  .modal.wide{ max-width: 860px; }
+  .join-head{ text-align:left; }
+  .modal-kicker{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:12px;
+    text-transform:uppercase; letter-spacing:1.5px; color: var(--gold); margin-bottom:8px;
+  }
+  .join-head h2{ text-align:left; }
+  .join-head p{ text-align:left; }
+  .modal.correct-glow{ box-shadow: 0 0 0 2px var(--gold), 0 0 40px rgba(242,183,5,0.3); }
+  .confetti-piece{
+    position:absolute; top:0; width:8px; height:14px; border-radius:2px;
+    animation: confettiFall 1.3s ease-in forwards;
+  }
+  .modal h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 25px; margin: 0 0 6px;
+  }
+  .modal p{ color: var(--muted); font-size:15px; margin: 0 0 20px; line-height:1.5; }
+  .clue-value{
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--gold); font-size: 17px; margin-bottom: 10px;
+  }
+  .clue-cat{ color: var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;}
+  .clue-text{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 25px; line-height:1.4; margin: 10px 0 22px;
+    animation: fadeInUp .35s ease .05s both;
+  }
+  .answer-text{
+    font-size: 20px; color: var(--cyan); margin: 0 0 18px;
+    font-family:'Space Grotesk', sans-serif;
+    animation: popIn .35s ease both;
+  }
+  .result-msg{
+    font-size:14px; margin: 0 0 18px; color: var(--gold); font-weight:500;
+    animation: fadeInUp .3s ease both;
+  }
+  .buzz-btn{
+    width: 114px; height:114px; border-radius:50%;
+    background: var(--magenta); color:#fff; border:none;
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:17px;
+    cursor:pointer;
+    box-shadow: 0 0 0 6px rgba(255,61,129,0.15);
+    animation: pulse 1.6s infinite;
+    transition: transform .12s;
+  }
+  .buzz-btn:hover{ transform: scale(1.05); }
+  .buzz-btn:active{ transform: scale(0.94); }
+  .buzz-btn:disabled{ background: var(--muted); box-shadow:none; animation:none; cursor:default; }
+  .buzzed-info{ font-size:15px; margin-bottom:16px; animation: fadeInUp .3s ease both; }
+  .buzzed-info b{ color: var(--gold); }
+
+  .answer-form{ display:flex; gap:8px; margin-bottom:18px; animation: fadeInUp .3s ease both; }
+  .answer-form input{
+    flex:1; padding:11px 13px; border-radius:8px; border:1px solid var(--line);
+    background: var(--panel-2); color:var(--text); font-size:16px;
+    font-family:'Inter',sans-serif;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .answer-form input:focus{ outline:none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,183,5,0.15); }
+
+  .row-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:500; font-size:16px;
+    padding: 12px 22px; border-radius:8px; cursor:pointer; border:1px solid var(--line);
+    background: var(--panel-2); color: var(--text);
+    transition: transform .12s, filter .12s, border-color .12s;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn.gold{ background: var(--gold); color:#1a1400; border:none; font-weight:700; }
+  .btn.cyan{ background: var(--cyan); color:#04342c; border:none; font-weight:700; }
+  .btn.ghost{ background:transparent; color:var(--muted); font-size:12px; padding:6px 12px; }
+  .btn:hover{ filter: brightness(1.1); transform: translateY(-1px); }
+  .btn:active{ transform: translateY(0) scale(0.97); }
+  .btn:disabled{ opacity:.6; cursor:default; transform:none !important; filter:none !important; }
+  .btn-spinner{
+    display:inline-block; width:12px; height:12px; flex-shrink:0;
+    border:2px solid rgba(26,20,0,0.3); border-top-color:#1a1400;
+    border-radius:50%; animation: spin .6s linear infinite;
+  }
+
+  input.name-input{
+    width:100%; padding:14px 16px; border-radius:9px; border:1px solid var(--line);
+    background: var(--panel-2); color:var(--text); font-size:17px; margin-bottom:14px;
+    font-family:'Inter',sans-serif;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input.name-input:focus{ outline:none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,183,5,0.15); }
+  input.name-input:disabled{ opacity:.55; cursor:not-allowed; }
+  .field-label{ text-align:left; font-size:12px; color:var(--muted); margin: 0 0 7px; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
+  .room-row{ display:flex; gap:8px; margin-bottom:4px; align-items:center; }
+  .room-row input{ flex:1; text-transform:uppercase; letter-spacing:2px; text-align:center; font-family:'IBM Plex Mono', monospace; cursor:pointer; }
+  .room-code-boxes{
+    display:flex; gap:9px;
+    filter: blur(7px);
+    transition: filter .18s ease;
+  }
+  .room-code-boxes:hover, .room-code-boxes:focus-within{ filter: blur(0); }
+  .room-box{
+    width:56px; height:56px; text-align:center;
+    font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:600;
+    text-transform:uppercase; color: var(--gold);
+    background: var(--panel-2); border:1px solid var(--line); border-radius:10px;
+    cursor:text;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .room-box:focus{ outline:none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,183,5,0.15); }
+  .copy-feedback{ font-size:11px; color: var(--cyan); text-align:left; min-height:14px; margin:0 0 10px; opacity:0; transition:opacity .2s; }
+  .copy-feedback.show{ opacity:1; }
+  .dice-btn{
+    background: var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    color: var(--text); width:46px; height:46px; cursor:pointer; font-size:17px;
+    display:flex; align-items:center; justify-content:center; padding:0;
+    transition: transform .2s, border-color .15s, color .15s;
+  }
+  .dice-btn svg{ width:18px; height:18px; }
+  .dice-btn:hover{ border-color: var(--gold); }
+  .dice-btn#diceBtn:hover{ transform: rotate(35deg); }
+  .dice-btn.copied{ color: var(--cyan); border-color: var(--cyan); }
+  .rejoin-hint{ text-align:left; font-size:12px; color: var(--muted); margin: 0 0 14px; cursor:pointer; }
+  .rejoin-hint b{ color: var(--cyan); }
+  .rejoin-hint:hover{ color: var(--text); }
+
+  .mode-options{ display:flex; gap:8px; margin-bottom:16px; }
+  .mode-opt{
+    flex:1; text-align:left; background: var(--panel-2); border:1px solid var(--line);
+    border-radius:10px; padding:11px 13px; cursor:pointer; color: var(--text);
+    transition: all .15s;
+  }
+  .mode-opt b{ display:block; font-family:'Space Grotesk', sans-serif; font-size:13px; }
+  .mode-opt span{ display:block; font-size:11px; color: var(--muted); margin-top:3px; line-height:1.3; }
+  .mode-opt.active{ border-color: var(--gold); background: rgba(242,183,5,0.1); }
+  .mode-opt:hover{ border-color: var(--gold); }
+
+  .round-options{ display:flex; gap:8px; margin-bottom:16px; }
+  .round-opt{
+    flex:1; background: var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:9px; cursor:pointer; color: var(--muted);
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:12px;
+    text-transform:uppercase; letter-spacing:0.3px; transition: all .15s;
+  }
+  .round-opt.active{ background: var(--gold); color:#1a1400; border-color: var(--gold); }
+  .round-opt:hover{ border-color: var(--gold); }
+
+  .avatar-chips{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px; }
+  .avatar-chip{
+    background: var(--panel-2); border:1px solid var(--line); border-radius:10px;
+    width:45px; height:45px; font-size:21px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: all .15s;
+  }
+  .avatar-chip.active{ border-color: var(--gold); background: rgba(242,183,5,0.14); }
+  .avatar-chip:hover{ border-color: var(--gold); }
+
+  .color-chips{ display:flex; flex-wrap:wrap; gap:9px; margin-bottom:16px; }
+  .color-chip{
+    width:34px; height:34px; border-radius:50%; cursor:pointer;
+    border:2px solid transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    transition: all .15s;
+  }
+  .color-chip.active{ border-color: var(--text); transform: scale(1.12); }
+  .color-chip:hover{ transform: scale(1.08); }
+
+  .cat-chips{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:6px; }
+  .cat-chip{
+    background: var(--panel-2); border:1px solid var(--line); color: var(--muted);
+    border-radius:999px; padding:7px 13px; font-size:12px; cursor:pointer;
+    transition: all .15s;
+  }
+  .cat-chip.active{ background: rgba(51,230,204,0.14); border-color: var(--cyan); color: var(--cyan); }
+  .cat-chip:hover{ border-color: var(--cyan); }
+  .cat-count{ color: var(--muted); font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; }
+  .random-cats-btn{
+    margin-left:auto; background:transparent; border:1px solid var(--line); color:var(--muted);
+    border-radius:999px; padding:4px 11px; font-size:11px; cursor:pointer;
+    text-transform:none; letter-spacing:0; font-weight:500;
+    transition: all .15s;
+  }
+  .random-cats-btn:hover{ color: var(--text); border-color: var(--gold); transform: translateY(-1px); }
+  .form-error{ color: var(--magenta); font-size:12px; text-align:left; min-height:16px; margin:2px 0 4px; }
+  .form-note{ text-align:left; font-size:11.5px; color: var(--muted); margin: 4px 0 18px; line-height:1.4; }
+
+  .empty-note{ color:var(--muted); font-size:13px; text-align:center; padding: 8px 0; }
+
+  .reaction-layer{
+    position: fixed; inset:0; pointer-events:none; overflow:hidden; z-index:45;
+  }
+  .floating-emoji{
+    position:absolute; bottom:70px; font-size:32px;
+    animation: floatUp 3s ease-out forwards;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+  }
+  @keyframes floatUp{
+    0%{ transform: translateY(0) translateX(0) scale(0.7); opacity:0; }
+    12%{ opacity:1; transform: translateY(-20px) translateX(0) scale(1); }
+    100%{ transform: translateY(-380px) translateX(var(--drift,0px)) scale(1.1); opacity:0; }
+  }
+  .reaction-bar{
+    position: fixed; bottom:18px; left:50%; transform: translateX(-50%);
+    display:flex; gap:6px; align-items:center; justify-content:center;
+    background: var(--panel); border:1px solid var(--line); border-radius:999px;
+    padding:7px; z-index:46; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .reaction-btn{
+    background:transparent; border:none; font-size:19px; line-height:1;
+    width:38px; height:38px; border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: transform .12s, background .12s;
+  }
+  .reaction-btn:hover{ background: var(--panel-2); transform: translateY(-2px) scale(1.08); }
+  .reaction-btn:active{ transform: translateY(0) scale(0.92); }
+</style>
+</head>
+<body>
+<div class="bg-glow"><span></span><span></span><span></span></div>
+<div id="root">
+  <div class="brand">
+    <div>
+      <h1>JEOPARDY+</h1>
+      <div class="tag">Buzzez, puis répondez</div>
+    </div>
+    <div id="meBadge"></div>
+  </div>
+
+  <div class="room-bar" id="roomBar"></div>
+
+  <div class="layout">
+    <div>
+      <div class="round-banner" id="roundBanner"></div>
+      <div class="board-wrap" id="boardWrap">
+        <div class="board" id="board"></div>
+        <div class="board-lock" id="boardLock" style="display:none;">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-title">En attente d'un autre joueur…</div>
+          <div class="lock-sub">Partagez le code <b id="lockRoomCode"></b> avec un ami pour lancer le duel, ou continuez sans attendre.</div>
+          <button class="btn gold" id="soloSwitchBtn" type="button">Jouer en solo maintenant</button>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <h2>Scores</h2>
+      <div id="scores"></div>
+      <button class="reset-btn" id="resetBtn">Réinitialiser la partie</button>
+      <div class="chat-section">
+        <h2>Discussion</h2>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" maxlength="240" placeholder="Écrire un message…" autocomplete="off" />
+          <button class="btn cyan" id="chatSendBtn" type="button" title="Envoyer">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="overlayLayer"></div>
+<div id="reactionLayer" class="reaction-layer"></div>
+<div class="reaction-bar" id="reactionBar" style="display:none;">
+  <button type="button" class="reaction-btn" data-emoji="👍">👍</button>
+  <button type="button" class="reaction-btn" data-emoji="❤️">❤️</button>
+  <button type="button" class="reaction-btn" data-emoji="😂">😂</button>
+  <button type="button" class="reaction-btn" data-emoji="😮">😮</button>
+  <button type="button" class="reaction-btn" data-emoji="👏">👏</button>
+  <button type="button" class="reaction-btn" data-emoji="🔥">🔥</button>
+  <button type="button" class="reaction-btn" data-emoji="🎉">🎉</button>
+</div>
+
+<script>
+const PALETTE = ['#e24b4a','#f27059','#ff8a3d','#ffcf5c','#f2b705','#639922','#8de37a','#6ee7b7','#33e6cc','#4dd0e1','#5ad1ff','#7f77dd','#c9a8ff','#c084fc','#ffa8d5','#ff3d81'];
+const EMOJI_AVATARS = ['🦊','🐼','🐸','🦁','🐙','🦄','🐳','🦉','🐝','🐺','🦋','🦖','🐧','🐨','🦈'];
+const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const CONFETTI_COLORS = ['#f2b705','#ff3d81','#33e6cc','#7f77dd','#639922'];
+const CATEGORY_ACCENTS = ['#f2b705','#ff3d81','#33e6cc','#7f77dd','#ff8a3d','#5ad1ff','#c084fc','#8de37a','#ffcf5c','#ff6b6b','#4dd0e1','#b8f2a4','#ffa8d5','#c9a8ff'];
+const MAX_CATEGORIES = 8;
+const DEFAULT_CATEGORIES = 5;
+
+const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+const ICON_REFRESH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>';
+
+const CATEGORIES = [
+  { title: "Géographie", clues: [
+    { value: 100, pool: [
+      { clue: "Ce fleuve, le plus long d'Afrique, traverse onze pays avant de se jeter dans la Méditerranée.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBOaWwgPw==" },
+      { clue: "Ce pays d'Océanie est aussi le nom d'un continent à lui seul.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0F1c3RyYWxpZSA/" },
+      { clue: "Ce pays d'Amérique du Sud, le plus vaste, a pour capitale Brasília.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCcsOpc2lsID8=" },
+      { clue: "Cette montagne est le plus haut sommet du monde, culminant à plus de 8 800 mètres dans l'Himalaya.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0V2ZXJlc3QgPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cette chaîne de montagnes sépare traditionnellement l'Europe de l'Asie.", answer: "UXUnZXN0LWNlIHF1ZSBsJ091cmFsID8=" },
+      { clue: "Cet océan est le plus grand du monde, bordant l'Asie et les Amériques.", answer: "UXUnZXN0LWNlIHF1ZSBsJ29jw6lhbiBQYWNpZmlxdWUgPw==" },
+      { clue: "Cette mer, la plus salée du monde, se trouve entre la Jordanie et Israël.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtZXIgTW9ydGUgPw==" },
+      { clue: "Ce fleuve traverse Paris avant de se jeter dans la Manche.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBTZWluZSA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce pays est à la fois le plus petit État du monde et le siège de l'Église catholique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBWYXRpY2FuID8=" },
+      { clue: "Ce désert, le plus grand désert chaud du monde, couvre une large part de l'Afrique du Nord.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTYWhhcmEgPw==" },
+      { clue: "Cette île, la plus grande du monde, appartient au royaume du Danemark.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBHcm9lbmxhbmQgPw==" },
+      { clue: "Ce lac africain est le plus grand lac du continent par sa superficie.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsYWMgVmljdG9yaWEgPw==" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce détroit sépare l'Espagne du Maroc et relie l'Atlantique à la Méditerranée.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6l0cm9pdCBkZSBHaWJyYWx0YXIgPw==" },
+      { clue: "Ce pays d'Asie centrale, ancien pays le plus vaste sans accès à la mer, a pour capitale Astana.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBLYXpha2hzdGFuID8=" },
+      { clue: "Ce détroit sépare l'Asie de l'Amérique du Nord, entre la Russie et l'Alaska.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6l0cm9pdCBkZSBCw6lyaW5nID8=" },
+      { clue: "Cette chaîne de montagnes, la plus longue du monde, longe la côte ouest de l'Amérique du Sud.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjb3JkaWxsw6hyZSBkZXMgQW5kZXMgPw==" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cette capitale d'Amérique du Sud est la plus haute au monde, à plus de 3600 mètres d'altitude.", answer: "UXUnZXN0LWNlIHF1ZSBMYSBQYXogPw==" },
+      { clue: "Ce pays, le seul à occuper un continent entier, partage sa frontière terrestre avec un unique voisin.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FmcmlxdWUgZHUgU3VkID8=" },
+      { clue: "Cette ville est bâtie à cheval sur deux continents, séparés par le détroit du Bosphore.", answer: "UXUnZXN0LWNlIHF1J0lzdGFuYnVsID8=" },
+      { clue: "Ce territoire polaire n'appartient à aucun pays et est régi par un traité international signé en 1959.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FudGFyY3RpcXVlID8=" },
+    ] },
+  ]},
+  { title: "Histoire de France", clues: [
+    { value: 100, pool: [
+      { clue: "Ce roi surnommé le Roi-Soleil a régné plus de 72 ans.", answer: "UXVpIGVzdCBMb3VpcyBYSVYgPw==" },
+      { clue: "Ce général corse s'est couronné empereur des Français en 1804.", answer: "UXVpIGVzdCBOYXBvbMOpb24gQm9uYXBhcnRlID8=" },
+      { clue: "Cette reine, épouse de Louis XVI, fut guillotinée en 1793 pendant la Révolution.", answer: "UXVpIGVzdCBNYXJpZS1BbnRvaW5ldHRlID8=" },
+      { clue: "Ce roi, dit le Bien-Aimé, régna de 1715 à 1774, entre Louis XIV et Louis XVI.", answer: "UXVpIGVzdCBMb3VpcyBYViA/" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cette forteresse parisienne fut prise le 14 juillet 1789.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBCYXN0aWxsZSA/" },
+      { clue: "Ce traité de 1648 met fin à la guerre de Trente Ans.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0cmFpdMOpIGRlIFdlc3RwaGFsaWUgPw==" },
+      { clue: "Ce palais, ancienne résidence royale près de Paris, fut voulu par Louis XIV.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaMOidGVhdSBkZSBWZXJzYWlsbGVzID8=" },
+      { clue: "Cette bataille de 1815 marque la défaite définitive de Napoléon face aux armées coalisées.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYXRhaWxsZSBkZSBXYXRlcmxvbyA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cette jeune femme fut brûlée vive à Rouen en 1431 après avoir mené l'armée française.", answer: "UXVpIGVzdCBKZWFubmUgZCdBcmMgPw==" },
+      { clue: "Ce ministre de Louis XIV a réformé les finances et développé l'industrie et la marine françaises.", answer: "UXVpIGVzdCBDb2xiZXJ0ID8=" },
+      { clue: "Ce cardinal, principal ministre de Louis XIII, a renforcé le pouvoir royal au XVIIe siècle.", answer: "UXVpIGVzdCBSaWNoZWxpZXUgPw==" },
+      { clue: "Cette période de répression révolutionnaire, en 1793-1794, est associée à Robespierre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBUZXJyZXVyID8=" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce jour de novembre 1918 marque la fin des combats de la Première Guerre mondiale.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FybWlzdGljZSA/" },
+      { clue: "Cette bataille de 1916, l'une des plus meurtrières de l'histoire, s'est déroulée dans la Meuse.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYXRhaWxsZSBkZSBWZXJkdW4gPw==" },
+      { clue: "Ce mouvement de résistants a combattu l'occupation allemande en France entre 1940 et 1944.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBSw6lzaXN0YW5jZSA/" },
+      { clue: "Cette femme politique française, ministre de la Santé, a fait légaliser l'avortement en France en 1975.", answer: "UXVpIGVzdCBTaW1vbmUgVmVpbCA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce général devenu président fonda la Ve République en 1958.", answer: "UXVpIGVzdCBDaGFybGVzIGRlIEdhdWxsZSA/" },
+      { clue: "Ce document de 1789 proclame la liberté et l'égalité des citoyens.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBEw6ljbGFyYXRpb24gZGVzIGRyb2l0cyBkZSBsJ2hvbW1lIGV0IGR1IGNpdG95ZW4gPw==" },
+      { clue: "Cette guerre, commencée en 1337, opposa la France et l'Angleterre pendant plus d'un siècle.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBndWVycmUgZGUgQ2VudCBBbnMgPw==" },
+      { clue: "Ce philosophe des Lumières, exilé en Angleterre, a écrit « Candide » et critiqué l'Église et la monarchie absolue.", answer: "UXVpIGVzdCBWb2x0YWlyZSA/" },
+    ] },
+  ]},
+  { title: "Sciences & Nature", clues: [
+    { value: 100, pool: [
+      { clue: "Cet organe pompe environ 7000 litres de sang par jour dans le corps humain.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjxZN1ciA/" },
+      { clue: "Cet état de la matière n'a ni forme propre ni volume propre.", answer: "UXUnZXN0LWNlIHF1J3VuIGdheiA/" },
+      { clue: "Cet organe permet de respirer en captant l'oxygène de l'air.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwb3Vtb24gPw==" },
+      { clue: "Cette planète est la plus proche du Soleil et aussi la plus petite du système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBNZXJjdXJlID8=" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce gaz représente environ 78% de l'atmosphère terrestre.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2F6b3RlID8=" },
+      { clue: "Cette force attire les objets vers le centre de la Terre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBncmF2aXTDqSA/" },
+      { clue: "Ce processus permet aux plantes de produire de l'énergie à partir de la lumière du soleil.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwaG90b3N5bnRow6hzZSA/" },
+      { clue: "Cet état de la matière conserve un volume propre mais épouse la forme de son contenant.", answer: "UXUnZXN0LWNlIHF1J3VuIGxpcXVpZGUgPw==" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cette planète est surnommée la planète rouge.", answer: "UXUnZXN0LWNlIHF1ZSBNYXJzID8=" },
+      { clue: "Cette cellule reproductrice mâle féconde l'ovule chez les animaux.", answer: "UXUnZXN0LWNlIHF1J3VuIHNwZXJtYXRvem/Dr2RlID8=" },
+      { clue: "Ce savant italien, souvent considéré comme le père de la science moderne, fut jugé par l'Église pour avoir défendu l'héliocentrisme.", answer: "UXVpIGVzdCBHYWxpbMOpZSA/" },
+      { clue: "Cette unité de mesure de la température place le point de congélation de l'eau à 0 degré.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBDZWxzaXVzID8=" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce physicien a formulé la théorie de la relativité générale en 1915.", answer: "UXVpIGVzdCBBbGJlcnQgRWluc3RlaW4gPw==" },
+      { clue: "Cette molécule en double hélice porte l'information génétique des êtres vivants.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FETiA/" },
+      { clue: "Ce naturaliste britannique a formulé la théorie de l'évolution par la sélection naturelle.", answer: "UXVpIGVzdCBDaGFybGVzIERhcndpbiA/" },
+      { clue: "Cette particule subatomique, chargée négativement, gravite autour du noyau de l'atome.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpbGVjdHJvbiA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cet insecte peut soulever jusqu'à environ 50 fois son propre poids.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb3VybWkgPw==" },
+      { clue: "Ce phénomène quantique décrit deux particules dont l'état reste lié quelle que soit la distance.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2ludHJpY2F0aW9uIHF1YW50aXF1ZSA/" },
+      { clue: "Ce physicien anglais du XVIIe siècle a formulé la loi de la gravitation universelle.", answer: "UXVpIGVzdCBJc2FhYyBOZXd0b24gPw==" },
+      { clue: "Cette théorie explique l'origine de l'univers à partir d'une expansion extrêmement rapide depuis un état dense et chaud.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCaWcgQmFuZyA/" },
+    ] },
+  ]},
+  { title: "Cinéma & Séries", clues: [
+    { value: 100, pool: [
+      { clue: "Ce réalisateur français a créé le personnage d'Amélie Poulain en 2001.", answer: "UXVpIGVzdCBKZWFuLVBpZXJyZSBKZXVuZXQgPw==" },
+      { clue: "Ce studio américain a produit le premier long-métrage d'animation entièrement en images de synthèse, Toy Story.", answer: "UXUnZXN0LWNlIHF1ZSBQaXhhciA/" },
+      { clue: "Ce réalisateur américain a créé la saga Star Wars en 1977.", answer: "UXVpIGVzdCBHZW9yZ2UgTHVjYXMgPw==" },
+      { clue: "Cette actrice française a incarné Amélie Poulain dans le film éponyme de 2001.", answer: "UXVpIGVzdCBBdWRyZXkgVGF1dG91ID8=" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cette saga de science-fiction commence par « Il y a bien longtemps, dans une galaxie lointaine ».", answer: "UXUnZXN0LWNlIHF1ZSBTdGFyIFdhcnMgPw==" },
+      { clue: "Ce réalisateur britannique a mis en scène Psychose et Les Oiseaux.", answer: "UXVpIGVzdCBBbGZyZWQgSGl0Y2hjb2NrID8=" },
+      { clue: "Cette série britannique met en scène un détective consultant vivant au 221B Baker Street.", answer: "UXUnZXN0LWNlIHF1ZSBTaGVybG9jayA/" },
+      { clue: "Ce réalisateur américain est connu pour ses films non linéaires comme « Pulp Fiction ».", answer: "UXVpIGVzdCBRdWVudGluIFRhcmFudGlubyA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce studio d'animation japonais a produit « Le Voyage de Chihiro ».", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTdHVkaW8gR2hpYmxpID8=" },
+      { clue: "Cette comédienne française, égérie de la Nouvelle Vague, a joué dans « À bout de souffle ».", answer: "UXVpIGVzdCBKZWFuIFNlYmVyZyA/" },
+      { clue: "Cette actrice américaine a incarné Katniss Everdeen dans la saga Hunger Games.", answer: "UXVpIGVzdCBKZW5uaWZlciBMYXdyZW5jZSA/" },
+      { clue: "Ce film de 1994 raconte la vie d'un homme simple d'esprit traversant les grands événements du XXe siècle américain.", answer: "UXUnZXN0LWNlIHF1ZSBGb3JyZXN0IEd1bXAgPw==" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cet acteur américain a incarné Iron Man dans l'univers cinématographique Marvel.", answer: "UXVpIGVzdCBSb2JlcnQgRG93bmV5IEpyLiA/" },
+      { clue: "Ce réalisateur américain a créé les sagas Indiana Jones et Jurassic Park.", answer: "UXVpIGVzdCBTdGV2ZW4gU3BpZWxiZXJnID8=" },
+      { clue: "Cette série américaine dépeint la transformation d'un professeur de chimie en baron de la drogue.", answer: "UXUnZXN0LWNlIHF1ZSBCcmVha2luZyBCYWQgPw==" },
+      { clue: "Ce réalisateur canadien a réalisé Titanic et Avatar.", answer: "UXVpIGVzdCBKYW1lcyBDYW1lcm9uID8=" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cette série met en scène des familles nobles se disputant le Trône de Fer.", answer: "UXUnZXN0LWNlIHF1ZSBHYW1lIG9mIFRocm9uZXMgPw==" },
+      { clue: "Ce film de 1941, souvent cité comme le plus grand film de l'histoire, retrace la vie d'un magnat de la presse.", answer: "UXUnZXN0LWNlIHF1ZSBDaXRpemVuIEthbmUgPw==" },
+      { clue: "Ce film de 1972 raconte l'histoire de la famille mafieuse Corleone.", answer: "UXUnZXN0LWNlIHF1ZSBMZSBQYXJyYWluID8=" },
+      { clue: "Ce réalisateur néo-zélandais a adapté la trilogie du Seigneur des Anneaux au cinéma.", answer: "UXVpIGVzdCBQZXRlciBKYWNrc29uID8=" },
+    ] },
+  ]},
+  { title: "Sport", clues: [
+    { value: 100, pool: [
+      { clue: "Ce sport se joue avec une raquette et un volant, sur un terrain divisé par un filet.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiYWRtaW50b24gPw==" },
+      { clue: "Ce sport oppose deux équipes de cinq joueurs qui tentent de marquer dans un panier.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiYXNrZXRiYWxsID8=" },
+      { clue: "Ce sport se joue avec une balle ovale et deux équipes qui tentent d'aplatir le ballon dans l'en-but adverse.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBydWdieSA/" },
+      { clue: "Ce sport nautique consiste à glisser sur l'eau debout sur une planche tractée par une vague.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzdXJmID8=" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cette compétition de football se déroule tous les quatre ans entre équipes nationales.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBDb3VwZSBkdSBNb25kZSA/" },
+      { clue: "Ce tournoi de tennis londonien, le plus ancien du monde, se joue sur gazon.", answer: "UXUnZXN0LWNlIHF1ZSBXaW1ibGVkb24gPw==" },
+      { clue: "Cette compétition cycliste française, créée en 1903, parcourt le pays chaque été en plusieurs étapes.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBUb3VyIGRlIEZyYW5jZSA/" },
+      { clue: "Ce sport de combat japonais, discipline olympique, vise à projeter ou immobiliser l'adversaire.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBqdWRvID8=" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce pays est considéré comme l'inventeur du rugby moderne, né à Rugby School au XIXe siècle.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FuZ2xldGVycmUgPw==" },
+      { clue: "Cette épreuve d'athlétisme combine course, saut et lancer sur deux jours et dix disciplines.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6ljYXRobG9uID8=" },
+      { clue: "Ce pays a remporté la Coupe du monde de football à cinq reprises, un record.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCcsOpc2lsID8=" },
+      { clue: "Cette compétition automobile, la plus prestigieuse, oppose des monoplaces sur des circuits du monde entier.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBGb3JtdWxlIDEgPw==" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce cycliste français a remporté le Tour de France à cinq reprises dans les années 1960.", answer: "UXVpIGVzdCBKYWNxdWVzIEFucXVldGlsID8=" },
+      { clue: "Cette joueuse américaine détient le record du plus grand nombre de titres du Grand Chelem en simple à l'ère Open.", answer: "UXVpIGVzdCBTZXJlbmEgV2lsbGlhbXMgPw==" },
+      { clue: "Ce footballeur argentin a remporté le Ballon d'or à sept reprises et la Coupe du monde 2022.", answer: "UXVpIGVzdCBMaW9uZWwgTWVzc2kgPw==" },
+      { clue: "Ce footballeur portugais est l'un des rares, avec Messi, à avoir marqué plus de 800 buts en carrière.", answer: "UXVpIGVzdCBDcmlzdGlhbm8gUm9uYWxkbyA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce nageur américain détient le record du plus grand nombre de médailles olympiques toutes disciplines confondues, avec 23 titres.", answer: "UXVpIGVzdCBNaWNoYWVsIFBoZWxwcyA/" },
+      { clue: "Ce boxeur américain, trois fois champion du monde des poids lourds, se surnommait « The Greatest ».", answer: "UXVpIGVzdCBNb2hhbWVkIEFsaSA/" },
+      { clue: "Ce sprinteur jamaïcain détient les records du monde du 100 et du 200 mètres.", answer: "UXVpIGVzdCBVc2FpbiBCb2x0ID8=" },
+      { clue: "Cette gymnaste américaine, multiple championne olympique, est l'une des plus décorées de l'histoire.", answer: "UXVpIGVzdCBTaW1vbmUgQmlsZXMgPw==" },
+    ] },
+  ]},
+  { title: "Musique", clues: [
+    { value: 100, pool: [
+      { clue: "Ce compositeur allemand, devenu sourd, a composé sa Neuvième Symphonie alors qu'il n'entendait plus.", answer: "UXVpIGVzdCBMdWR3aWcgdmFuIEJlZXRob3ZlbiA/" },
+      { clue: "Cet instrument à clavier possède 88 touches, blanches et noires.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwaWFubyA/" },
+      { clue: "Cet instrument à vent, symbole du jazz, est joué en pinçant une anche simple sur un bec.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzYXhvcGhvbmUgPw==" },
+      { clue: "Ce groupe suédois a triomphé à l'Eurovision 1974 avec « Waterloo ».", answer: "UXUnZXN0LWNlIHF1J0FCQkEgPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cet instrument à cordes pincées possède généralement six cordes et un manche fretté.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBndWl0YXJlID8=" },
+      { clue: "Ce genre musical né à la Nouvelle-Orléans au début du XXe siècle repose largement sur l'improvisation.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBqYXp6ID8=" },
+      { clue: "Ce genre musical né en Jamaïque dans les années 1960 est associé à Bob Marley.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByZWdnYWUgPw==" },
+      { clue: "Cet instrument à percussion se joue avec des baguettes sur des peaux tendues et des cymbales.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYXR0ZXJpZSA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce groupe britannique formé à Liverpool en 1960 comptait Lennon, McCartney, Harrison et Starr.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgQmVhdGxlcyA/" },
+      { clue: "Ce chanteur américain surnommé le « Roi du rock » a marqué les années 1950 avec « Jailhouse Rock ».", answer: "UXVpIGVzdCBFbHZpcyBQcmVzbGV5ID8=" },
+      { clue: "Ce chanteur américain, surnommé le « Roi de la pop », a sorti l'album Thriller en 1982.", answer: "UXVpIGVzdCBNaWNoYWVsIEphY2tzb24gPw==" },
+      { clue: "Ce groupe britannique de rock, mené par Freddie Mercury, a interprété « Bohemian Rhapsody ».", answer: "UXUnZXN0LWNlIHF1ZSBRdWVlbiA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette chanteuse québécoise a interprété le générique du film Titanic, une célèbre ballade de 1997.", answer: "UXVpIGVzdCBDw6lsaW5lIERpb24gPw==" },
+      { clue: "Ce festival de musique et d'art créé en 1970 se déroule chaque été dans le désert californien.", answer: "UXUnZXN0LWNlIHF1ZSBDb2FjaGVsbGEgPw==" },
+      { clue: "Cette chanteuse américaine, surnommée la « Reine de la pop », a sorti « Like a Virgin » en 1984.", answer: "UXVpIGVzdCBNYWRvbm5hID8=" },
+      { clue: "Ce festival de musique britannique se tient chaque été sur une ferme du Somerset depuis 1970.", answer: "UXUnZXN0LWNlIHF1ZSBHbGFzdG9uYnVyeSA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce compositeur autrichien a écrit plus de 600 œuvres avant sa mort à 35 ans en 1791.", answer: "UXVpIGVzdCBXb2xmZ2FuZyBBbWFkZXVzIE1vemFydCA/" },
+      { clue: "Ce compositeur allemand du XVIIIe siècle, maître du contrepoint, est l'auteur des Concertos brandebourgeois.", answer: "UXVpIGVzdCBKZWFuLVPDqWJhc3RpZW4gQmFjaCA/" },
+      { clue: "Ce compositeur allemand du romantisme a écrit l'opéra « La Walkyrie ».", answer: "UXVpIGVzdCBSaWNoYXJkIFdhZ25lciA/" },
+      { clue: "Ce violoniste et compositeur italien du XIXe siècle était réputé pour une virtuosité qu'on disait diabolique.", answer: "UXVpIGVzdCBOaWNjb2zDsiBQYWdhbmluaSA/" },
+    ] },
+  ]},
+  { title: "Art & Littérature", clues: [
+    { value: 100, pool: [
+      { clue: "Ce peintre néerlandais s'est coupé une partie de l'oreille et a peint « La Nuit étoilée ».", answer: "UXVpIGVzdCBWaW5jZW50IHZhbiBHb2doID8=" },
+      { clue: "Cet écrivain français du XIXe siècle a écrit « Le Comte de Monte-Cristo » et « Les Trois Mousquetaires ».", answer: "UXVpIGVzdCBBbGV4YW5kcmUgRHVtYXMgPw==" },
+      { clue: "Cet écrivain anglais du XVIe siècle est l'auteur de « Roméo et Juliette » et « Hamlet ».", answer: "UXVpIGVzdCBXaWxsaWFtIFNoYWtlc3BlYXJlID8=" },
+      { clue: "Ce peintre italien de la Renaissance a peint le plafond de la chapelle Sixtine.", answer: "UXVpIGVzdCBNaWNoZWwtQW5nZSA/" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce roman de Victor Hugo raconte l'histoire de Jean Valjean, un ancien bagnard.", answer: "UXUnZXN0LWNlIHF1ZSBMZXMgTWlzw6lyYWJsZXMgPw==" },
+      { clue: "Ce peintre espagnol est le fondateur du cubisme avec Georges Braque.", answer: "UXVpIGVzdCBQYWJsbyBQaWNhc3NvID8=" },
+      { clue: "Cet écrivain français du XIXe siècle a écrit « Madame Bovary ».", answer: "UXVpIGVzdCBHdXN0YXZlIEZsYXViZXJ0ID8=" },
+      { clue: "Ce mouvement pictural du XIXe siècle, nommé d'après un tableau de Monet, privilégie les jeux de lumière.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2ltcHJlc3Npb25uaXNtZSA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cette œuvre de Léonard de Vinci, exposée au Louvre, est célèbre pour son sourire énigmatique.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBKb2NvbmRlID8=" },
+      { clue: "Cet écrivain russe est l'auteur de « Guerre et Paix » et « Anna Karénine ».", answer: "UXVpIGVzdCBMw6lvbiBUb2xzdG/DryA/" },
+      { clue: "Ce peintre norvégien a peint « Le Cri » en 1893.", answer: "UXVpIGVzdCBFZHZhcmQgTXVuY2ggPw==" },
+      { clue: "Cet écrivain français du siècle des Lumières est l'auteur du conte philosophique « Candide ».", answer: "UXVpIGVzdCBWb2x0YWlyZSA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cet écrivain français a créé le détective Arsène Lupin, gentleman-cambrioleur.", answer: "UXVpIGVzdCBNYXVyaWNlIExlYmxhbmMgPw==" },
+      { clue: "Ce sculpteur français a réalisé « Le Penseur » et « Les Bourgeois de Calais ».", answer: "UXVpIGVzdCBBdWd1c3RlIFJvZGluID8=" },
+      { clue: "Cette autrice britannique a créé le sorcier Harry Potter.", answer: "UXVpIGVzdCBKLksuIFJvd2xpbmcgPw==" },
+      { clue: "Ce peintre néerlandais du XVIIe siècle a peint « La Jeune Fille à la perle ».", answer: "UXVpIGVzdCBKb2hhbm5lcyBWZXJtZWVyID8=" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce mouvement artistique du début du XXe siècle, porté par Picasso et Braque, fragmente les formes en volumes géométriques.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjdWJpc21lID8=" },
+      { clue: "Cet écrivain irlandais a bouleversé le roman moderne avec « Ulysse », publié en 1922.", answer: "UXVpIGVzdCBKYW1lcyBKb3ljZSA/" },
+      { clue: "Cet écrivain colombien, prix Nobel de littérature 1982, a écrit « Cent ans de solitude ».", answer: "UXVpIGVzdCBHYWJyaWVsIEdhcmPDrWEgTcOhcnF1ZXogPw==" },
+      { clue: "Ce mouvement littéraire et artistique du XXe siècle explore l'inconscient et les rêves, porté par André Breton.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzdXJyw6lhbGlzbWUgPw==" },
+    ] },
+  ]},
+  { title: "Technologie", clues: [
+    { value: 100, pool: [
+      { clue: "Cette entreprise fondée par Steve Jobs et Steve Wozniak a lancé le premier iPhone en 2007.", answer: "UXUnZXN0LWNlIHF1J0FwcGxlID8=" },
+      { clue: "Ce moteur de recherche, lancé en 1998, est devenu synonyme de recherche sur Internet.", answer: "UXUnZXN0LWNlIHF1ZSBHb29nbGUgPw==" },
+      { clue: "Ce fondateur de Microsoft a aussi créé la fondation caritative Bill & Melinda Gates.", answer: "UXVpIGVzdCBCaWxsIEdhdGVzID8=" },
+      { clue: "Cette technologie permet de se connecter à Internet sans fil grâce aux ondes radio.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBXaS1GaSA/" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce langage de programmation, créé en 1991, porte le nom d'une troupe comique britannique et non du serpent.", answer: "UXUnZXN0LWNlIHF1ZSBQeXRob24gPw==" },
+      { clue: "Ce réseau social fondé en 2004 par Mark Zuckerberg a été lancé depuis un dortoir de Harvard.", answer: "UXUnZXN0LWNlIHF1ZSBGYWNlYm9vayA/" },
+      { clue: "Ce système d'exploitation mobile open source, développé par Google, équipe la majorité des smartphones dans le monde.", answer: "UXUnZXN0LWNlIHF1J0FuZHJvaWQgPw==" },
+      { clue: "Cette entreprise américaine, cofondée par Elon Musk, produit des voitures électriques.", answer: "UXUnZXN0LWNlIHF1ZSBUZXNsYSA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce protocole permet d'afficher des pages web et commence généralement par ces lettres suivies de « :// » dans une adresse.", answer: "UXUnZXN0LWNlIHF1ZSBIVFRQID8=" },
+      { clue: "Cette technologie sans fil de courte portée permet de connecter écouteurs et claviers, symbolisée par un logo bleu.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCbHVldG9vdGggPw==" },
+      { clue: "Cet homme d'affaires sud-africain a fondé SpaceX et dirige Tesla.", answer: "UXVpIGVzdCBFbG9uIE11c2sgPw==" },
+      { clue: "Ce réseau social basé sur des photos et vidéos courtes a été racheté par Facebook en 2012.", answer: "UXUnZXN0LWNlIHF1J0luc3RhZ3JhbSA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette unité de mesure informatique équivaut à environ un milliard d'octets.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBnaWdhb2N0ZXQgPw==" },
+      { clue: "Ce composant électronique, cœur de l'ordinateur, exécute les instructions et les calculs.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwcm9jZXNzZXVyID8=" },
+      { clue: "Cette technologie de registre décentralisé sécurise les transactions de cryptomonnaies comme le bitcoin.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBibG9ja2NoYWluID8=" },
+      { clue: "Ce type d'intelligence artificielle générative, popularisé par ChatGPT, produit du texte à partir d'invites.", answer: "UXUnZXN0LWNlIHF1J3VuIGdyYW5kIG1vZMOobGUgZGUgbGFuZ2FnZSA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce scientifique britannique est considéré comme l'inventeur du World Wide Web en 1989.", answer: "UXVpIGVzdCBUaW0gQmVybmVycy1MZWUgPw==" },
+      { clue: "Cet algorithme d'apprentissage automatique imite le fonctionnement des neurones biologiques en couches successives.", answer: "UXUnZXN0LWNlIHF1J3VuIHLDqXNlYXUgZGUgbmV1cm9uZXMgPw==" },
+      { clue: "Cet informaticien américain a cofondé Microsoft avec Bill Gates en 1975.", answer: "UXVpIGVzdCBQYXVsIEFsbGVuID8=" },
+      { clue: "Cette loi empirique de 1965 prédit que le nombre de transistors sur une puce double environ tous les deux ans.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBsb2kgZGUgTW9vcmUgPw==" },
+    ] },
+  ]},
+  { title: "Gastronomie", clues: [
+    { value: 100, pool: [
+      { clue: "Ce plat provençal à base d'aubergines, courgettes, poivrons et tomates mijotés est originaire du sud de la France.", answer: "UXUnZXN0LWNlIHF1ZSBsYSByYXRhdG91aWxsZSA/" },
+      { clue: "Ce plat italien à base de riz crémeux est souvent préparé avec du vin blanc et du parmesan.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByaXNvdHRvID8=" },
+      { clue: "Ce sandwich vietnamien, hérité de la colonisation française, se prépare dans une baguette croustillante.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiYW5oIG1pID8=" },
+      { clue: "Ce plat japonais consiste en des morceaux de riz vinaigré associés à du poisson cru.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzdXNoaSA/" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce fromage à pâte molle et croûte fleurie porte le nom d'une commune de Seine-et-Marne.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBicmllID8=" },
+      { clue: "Cette boisson chaude, obtenue par infusion de feuilles séchées, est la deuxième la plus consommée au monde après l'eau.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0aMOpID8=" },
+      { clue: "Ce vin effervescent français, protégé par une appellation, provient d'une région du nord-est de la France.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGFtcGFnbmUgPw==" },
+      { clue: "Cette pâtisserie viennoise en forme de croissant est un classique du petit-déjeuner français.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjcm9pc3NhbnQgPw==" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cette sauce froide à base de jaune d'œuf, moutarde et huile est une des sauces mères de la cuisine française.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtYXlvbm5haXNlID8=" },
+      { clue: "Ce champignon très recherché, appelé « diamant noir », pousse sous terre près des chênes.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB0cnVmZmUgPw==" },
+      { clue: "Ce plat espagnol à base de riz safrané, de fruits de mer et de viande est originaire de Valence.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwYWVsbGEgPw==" },
+      { clue: "Ce fromage bleu français, affiné dans des grottes du Massif central, porte le nom d'un village de l'Aveyron.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByb3F1ZWZvcnQgPw==" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce chef français, décédé en 2020, était surnommé le « pape de la cuisine » et possédait un restaurant trois étoiles près de Lyon.", answer: "UXVpIGVzdCBQYXVsIEJvY3VzZSA/" },
+      { clue: "Ce guide gastronomique, créé en 1900 par un fabricant de pneus, attribue des étoiles aux restaurants.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBHdWlkZSBNaWNoZWxpbiA/" },
+      { clue: "Cette cheffe américaine a fait découvrir la cuisine française au grand public via la télévision dans les années 1960.", answer: "UXVpIGVzdCBKdWxpYSBDaGlsZCA/" },
+      { clue: "Ce plat mexicain consiste en une tortilla de maïs garnie de viande, légumes et sauce, pliée ou roulée.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0YWNvID8=" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cette technique de cuisson à basse température sous emballage hermétique préserve textures et saveurs.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjdWlzc29uIHNvdXMgdmlkZSA/" },
+      { clue: "Cette discipline scientifique étudie les transformations physico-chimiques survenant lors de la cuisson des aliments.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBnYXN0cm9ub21pZSBtb2zDqWN1bGFpcmUgPw==" },
+      { clue: "Cette technique de fermentation contrôlée transforme le raisin en vin grâce à des levures.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB2aW5pZmljYXRpb24gPw==" },
+      { clue: "Ce guide gastronomique français concurrent du Michelin note les restaurants avec un système de toques.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBHYXVsdCBldCBNaWxsYXUgPw==" },
+    ] },
+  ]},
+  { title: "Mythologie", clues: [
+    { value: 100, pool: [
+      { clue: "Ce roi des dieux grecs lance la foudre et règne depuis le mont Olympe.", answer: "UXVpIGVzdCBaZXVzID8=" },
+      { clue: "Cette déesse égyptienne de la magie et de la maternité est représentée avec un disque solaire entre des cornes de vache.", answer: "UXVpIGVzdCBJc2lzID8=" },
+      { clue: "Cette déesse grecque de l'amour et de la beauté est née de l'écume de la mer.", answer: "UXVpIGVzdCBBcGhyb2RpdGUgPw==" },
+      { clue: "Ce dieu égyptien du soleil, à tête de faucon, était l'une des divinités les plus vénérées d'Égypte antique.", answer: "UXVpIGVzdCBSw6ogPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce héros grec ne possédait qu'un point faible, situé à son talon.", answer: "UXVpIGVzdCBBY2hpbGxlID8=" },
+      { clue: "Ce dieu romain de la guerre a donné son nom à la planète rouge.", answer: "UXVpIGVzdCBNYXJzID8=" },
+      { clue: "Cette déesse grecque de la sagesse et de la guerre stratégique est née de la tête de Zeus.", answer: "UXVpIGVzdCBBdGjDqW5hID8=" },
+      { clue: "Ce messager ailé des dieux romains porte des sandales munies d'ailes.", answer: "UXVpIGVzdCBNZXJjdXJlID8=" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cette créature égyptienne possède un corps de lion et une tête humaine, gardienne du plateau de Gizeh.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTcGhpbnggPw==" },
+      { clue: "Ce héros grec accomplit douze travaux, dont tuer le lion de Némée.", answer: "UXVpIGVzdCBIw6lyYWNsw6hzIChIZXJjdWxlKSA/" },
+      { clue: "Ce héros grec, roi d'Ithaque, erra dix ans en mer après la guerre de Troie.", answer: "UXVpIGVzdCBVbHlzc2UgPw==" },
+      { clue: "Cette créature grecque mi-femme mi-oiseau attirait les marins par son chant.", answer: "UXUnZXN0LWNlIHF1J3VuZSBzaXLDqG5lID8=" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce dieu nordique du tonnerre manie un marteau nommé Mjöllnir.", answer: "UXVpIGVzdCBUaG9yID8=" },
+      { clue: "Cette gorgone au regard pétrifiant fut décapitée par Persée.", answer: "UXVpIGVzdCBNw6lkdXNlID8=" },
+      { clue: "Ce dieu grec des mers et des océans porte un trident.", answer: "UXVpIGVzdCBQb3PDqWlkb24gPw==" },
+      { clue: "Ce loup géant nordique, fils de Loki, doit dévorer Odin lors du Ragnarök.", answer: "UXUnZXN0LWNlIHF1ZSBGZW5yaXIgPw==" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Dans la mythologie égyptienne, ce dieu à tête de chacal préside à la momification et pèse les âmes des défunts.", answer: "UXVpIGVzdCBBbnViaXMgPw==" },
+      { clue: "Ce père des dieux nordiques, borgne, chevauche un cheval à huit pattes nommé Sleipnir.", answer: "UXVpIGVzdCBPZGluID8=" },
+      { clue: "Ce titan grec fut condamné à porter le ciel sur ses épaules pour l'éternité.", answer: "UXVpIGVzdCBBdGxhcyA/" },
+      { clue: "Ce serpent gigantesque nordique encercle le monde en se mordant la queue.", answer: "UXUnZXN0LWNlIHF1ZSBKw7ZybXVuZ2FuZHIgPw==" },
+    ] },
+  ]},
+  { title: "Espace", clues: [
+    { value: 100, pool: [
+      { clue: "Cette planète est la plus proche du Soleil dans le système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBNZXJjdXJlID8=" },
+      { clue: "Ce satellite naturel est le seul astre, hormis la Terre, sur lequel l'humain a marché.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBMdW5lID8=" },
+      { clue: "Cette étoile est celle autour de laquelle gravitent toutes les planètes du système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTb2xlaWwgPw==" },
+      { clue: "Cette planète, la plus grande du système solaire, possède une célèbre tache rouge.", answer: "UXUnZXN0LWNlIHF1ZSBKdXBpdGVyID8=" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cette agence spatiale américaine a envoyé les premiers hommes sur la Lune en 1969.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBOQVNBID8=" },
+      { clue: "Cette planète possède le plus grand système d'anneaux du système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBTYXR1cm5lID8=" },
+      { clue: "Cet astronaute américain fut le premier homme à marcher sur la Lune en 1969.", answer: "UXVpIGVzdCBOZWlsIEFybXN0cm9uZyA/" },
+      { clue: "Ce phénomène se produit quand la Lune passe entre la Terre et le Soleil, cachant ce dernier.", answer: "UXUnZXN0LWNlIHF1J3VuZSDDqWNsaXBzZSBzb2xhaXJlID8=" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce cosmonaute soviétique fut le premier être humain à voyager dans l'espace en 1961.", answer: "UXVpIGVzdCBZb3VyaSBHYWdhcmluZSA/" },
+      { clue: "Cette station spatiale, en orbite depuis 1998, est occupée en permanence par des astronautes internationaux.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBTdGF0aW9uIHNwYXRpYWxlIGludGVybmF0aW9uYWxlID8=" },
+      { clue: "Cette agence spatiale européenne regroupe une vingtaine de pays membres, dont la France.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VTQSA/" },
+      { clue: "Ce physicien anglais a théorisé le rayonnement émis par les trous noirs, aujourd'hui appelé de son nom.", answer: "UXVpIGVzdCBTdGVwaGVuIEhhd2tpbmcgPw==" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette galaxie spirale abrite notre système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBWb2llIGxhY3TDqWUgPw==" },
+      { clue: "Cet astronome italien fut le premier à pointer une lunette vers le ciel pour observer les satellites de Jupiter.", answer: "UXVpIGVzdCBHYWxpbMOpZSA/" },
+      { clue: "Cette entreprise américaine, fondée par Elon Musk, développe les fusées Falcon et Starship.", answer: "UXUnZXN0LWNlIHF1ZSBTcGFjZVggPw==" },
+      { clue: "Cette planète naine, découverte en 1930, fut longtemps considérée comme la neuvième planète du système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBQbHV0b24gPw==" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce télescope spatial, lancé en 2021, a succédé au télescope Hubble.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0w6lsZXNjb3BlIEphbWVzIFdlYmIgPw==" },
+      { clue: "Cet effondrement gravitationnel d'une étoile massive engendre un objet dont rien, pas même la lumière, ne peut s'échapper.", answer: "UXUnZXN0LWNlIHF1J3VuIHRyb3Ugbm9pciA/" },
+      { clue: "Cette astronaute et physicienne américaine fut la première femme américaine dans l'espace en 1983.", answer: "UXVpIGVzdCBTYWxseSBSaWRlID8=" },
+      { clue: "Ce phénomène astronomique correspond à l'explosion finale d'une étoile massive en fin de vie.", answer: "UXUnZXN0LWNlIHF1J3VuZSBzdXBlcm5vdmEgPw==" },
+    ] },
+  ]},
+  { title: "Jeux Vidéo", clues: [
+    { value: 100, pool: [
+      { clue: "Ce plombier moustachu créé par Nintendo doit sauver la princesse Peach.", answer: "UXVpIGVzdCBNYXJpbyA/" },
+      { clue: "Ce hérisson bleu véloce est la mascotte historique de Sega.", answer: "UXVpIGVzdCBTb25pYyA/" },
+      { clue: "Ce personnage jaune, créé par Namco en 1980, doit manger des pac-gommes en évitant des fantômes.", answer: "UXVpIGVzdCBQYWMtTWFuID8=" },
+      { clue: "Cette entreprise japonaise, éditrice de Mario et Zelda, a été fondée en 1889 comme fabricant de cartes à jouer.", answer: "UXUnZXN0LWNlIHF1ZSBOaW50ZW5kbyA/" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce jeu de construction suédois se joue avec des blocs cubiques dans un monde généré aléatoirement.", answer: "UXUnZXN0LWNlIHF1ZSBNaW5lY3JhZnQgPw==" },
+      { clue: "Ce jeu de bataille royale, gratuit depuis 2018, est développé par Epic Games.", answer: "UXUnZXN0LWNlIHF1ZSBGb3J0bml0ZSA/" },
+      { clue: "Ce jeu de tir en ligne, sorti en 2016, oppose des héros aux capacités uniques par équipes de six.", answer: "UXUnZXN0LWNlIHF1J092ZXJ3YXRjaCA/" },
+      { clue: "Cette licence de simulation de vie permet de contrôler des personnages virtuels appelés Sims.", answer: "UXUnZXN0LWNlIHF1ZSBMZXMgU2ltcyA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cette entreprise japonaise a créé la console PlayStation en 1994.", answer: "UXUnZXN0LWNlIHF1ZSBTb255ID8=" },
+      { clue: "Cette licence de jeux de rôle japonais, débutée en 1987, compte plus de quinze épisodes numérotés.", answer: "UXUnZXN0LWNlIHF1ZSBGaW5hbCBGYW50YXN5ID8=" },
+      { clue: "Cette entreprise américaine développe les licences Call of Duty et World of Warcraft.", answer: "UXUnZXN0LWNlIHF1J0FjdGl2aXNpb24gQmxpenphcmQgPw==" },
+      { clue: "Ce jeu vidéo de 2011, en monde ouvert médiéval-fantastique, se déroule dans la province de Bordeciel.", answer: "UXUnZXN0LWNlIHF1ZSBTa3lyaW0gPw==" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce jeu de tir en équipe, développé par Riot Games, oppose des agents aux capacités uniques.", answer: "UXUnZXN0LWNlIHF1ZSBWYWxvcmFudCA/" },
+      { clue: "Cette licence de jeux de course automobile est éditée par Nintendo depuis 1992, mettant en scène Mario et ses amis.", answer: "UXUnZXN0LWNlIHF1ZSBNYXJpbyBLYXJ0ID8=" },
+      { clue: "Cette licence de jeux de rôle et d'action, développée par Nintendo, met en scène un héros nommé Link dans le royaume d'Hyrule.", answer: "UXUnZXN0LWNlIHF1ZSBUaGUgTGVnZW5kIG9mIFplbGRhID8=" },
+      { clue: "Ce jeu vidéo compétitif en ligne, sorti en 2009, oppose deux équipes de cinq héros sur une seule carte.", answer: "UXUnZXN0LWNlIHF1ZSBMZWFndWUgb2YgTGVnZW5kcyA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce développeur japonais a créé les licences Zelda et Mario chez Nintendo.", answer: "UXVpIGVzdCBTaGlnZXJ1IE1peWFtb3RvID8=" },
+      { clue: "Cette console de Nintendo, sortie en 2017, se transforme d'un salon à un mode portable.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBOaW50ZW5kbyBTd2l0Y2ggPw==" },
+      { clue: "Cette console de Sony, sortie en 2020, a marqué la cinquième génération de la marque PlayStation.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBQbGF5U3RhdGlvbiA1ID8=" },
+      { clue: "Ce jeu de tir sorti en 1993, développé par id Software, est considéré comme un pionnier du genre FPS.", answer: "UXUnZXN0LWNlIHF1ZSBEb29tID8=" },
+    ] },
+  ]},
+  { title: "Animaux", clues: [
+    { value: 100, pool: [
+      { clue: "Cet animal marin est le plus grand du règne animal, pouvant mesurer plus de 25 mètres.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYWxlaW5lIGJsZXVlID8=" },
+      { clue: "Ce mammifère africain a le cou le plus long de tous les animaux terrestres.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBnaXJhZmUgPw==" },
+      { clue: "Cet animal est le meilleur ami de l'homme, descendant domestiqué du loup.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGllbiA/" },
+      { clue: "Cet oiseau incapable de voler est le plus grand oiseau vivant, originaire d'Afrique.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2F1dHJ1Y2hlID8=" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce marsupial australien porte ses petits dans une poche ventrale et se déplace par bonds.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBrYW5nb3Vyb3UgPw==" },
+      { clue: "Cet oiseau incapable de voler, natif de l'Antarctique, se déplace en se dandinant.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtYW5jaG90ID8=" },
+      { clue: "Ce félin est le plus rapide des animaux terrestres, capable d'atteindre 110 km/h.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBndcOpcGFyZCA/" },
+      { clue: "Cet insecte social vit en colonies organisées et produit du miel.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FiZWlsbGUgPw==" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cet oiseau incapable de voler est le plus rapide sur deux pattes, natif d'Afrique.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2F1dHJ1Y2hlID8=" },
+      { clue: "Ce reptile aquatique peut vivre plus de 100 ans et porte une carapace protectrice.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB0b3J0dWUgPw==" },
+      { clue: "Ce reptile marin peut vivre plus de 100 ans et pond ses œufs sur les plages où il est né.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB0b3J0dWUgbWFyaW5lID8=" },
+      { clue: "Ce grand singe, cousin proche de l'humain, vit principalement en Afrique centrale.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGltcGFuesOpID8=" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce félin le plus rapide du monde peut atteindre 110 km/h en pleine course.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBndcOpcGFyZCA/" },
+      { clue: "Ce grand singe d'Afrique centrale, le plus proche parent génétique de l'humain, partage environ 98% de son ADN avec nous.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGltcGFuesOpID8=" },
+      { clue: "Cet amphibien peut régénérer certains de ses membres perdus, comme sa queue ou ses pattes.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBzYWxhbWFuZHJlID8=" },
+      { clue: "Ce mammifère marin, l'un des plus grands prédateurs terrestres lorsqu'il est sur la banquise, vit dans l'Arctique.", answer: "UXUnZXN0LWNlIHF1ZSBsJ291cnMgcG9sYWlyZSA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cet animal peut changer de couleur grâce à des cellules appelées chromatophores.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYW3DqWzDqW9uID8=" },
+      { clue: "Ce mammifère marin, le plus grand animal ayant jamais existé, communique par des chants pouvant parcourir des centaines de kilomètres.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYWxlaW5lIMOgIGJvc3NlID8=" },
+      { clue: "Cet oiseau ne vole pas et vit exclusivement dans l'hémisphère sud, notamment en Antarctique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtYW5jaG90ID8=" },
+      { clue: "Ce céphalopode marin possède trois cœurs et un sang bleu grâce à l'hémocyanine.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwaWV1dnJlID8=" },
+    ] },
+  ]},
+  { title: "Inventions", clues: [
+    { value: 100, pool: [
+      { clue: "Cette invention de Gutenberg au XVe siècle a permis la diffusion massive des livres.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2ltcHJpbWVyaWUgPw==" },
+      { clue: "Cette roue, l'une des plus anciennes inventions humaines, a révolutionné le transport et l'artisanat.", answer: "UXUnZXN0LWNlIHF1ZSBsYSByb3VlID8=" },
+      { clue: "Cette invention permet de mesurer le temps grâce à des aiguilles tournant sur un cadran.", answer: "UXUnZXN0LWNlIHF1J3VuZSBob3Jsb2dlID8=" },
+      { clue: "Ce système permet de conserver les aliments au froid pour ralentir leur dégradation.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByw6lmcmlnw6lyYXRldXIgPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cet inventeur américain est associé à l'ampoule électrique et détient plus de 1000 brevets.", answer: "UXVpIGVzdCBUaG9tYXMgRWRpc29uID8=" },
+      { clue: "Cette invention chinoise, mélange de salpêtre, soufre et charbon, a transformé la guerre et les feux d'artifice.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwb3VkcmUgw6AgY2Fub24gPw==" },
+      { clue: "Cet inventeur serbo-américain a développé le courant alternatif et donné son nom à une unité de champ magnétique.", answer: "UXVpIGVzdCBOaWtvbGEgVGVzbGEgPw==" },
+      { clue: "Cette invention du XIe siècle chinois permet de s'orienter grâce au champ magnétique terrestre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBib3Vzc29sZSA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ces frères français ont inventé le cinématographe et projeté le premier film en 1895.", answer: "UXVpIHNvbnQgbGVzIGZyw6hyZXMgTHVtacOocmUgPw==" },
+      { clue: "Ce médecin écossais a découvert la pénicilline par accident en 1928.", answer: "UXVpIGVzdCBBbGV4YW5kZXIgRmxlbWluZyA/" },
+      { clue: "Ces deux frères américains ont réalisé le premier vol motorisé en 1903 à Kitty Hawk.", answer: "UXVpIHNvbnQgbGVzIGZyw6hyZXMgV3JpZ2h0ID8=" },
+      { clue: "Cet ingénieur écossais a inventé le premier téléviseur mécanique fonctionnel en 1925.", answer: "UXVpIGVzdCBKb2huIExvZ2llIEJhaXJkID8=" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette invention du XIXe siècle par Alfred Nobel a révolutionné les travaux publics et la guerre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkeW5hbWl0ZSA/" },
+      { clue: "Ce système d'écriture en points en relief, inventé par un Français au XIXe siècle, permet aux aveugles de lire.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBicmFpbGxlID8=" },
+      { clue: "Cette invention de Karl Benz en 1885 est considérée comme la première automobile moderne à essence.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2F1dG9tb2JpbGUgPw==" },
+      { clue: "Ce physicien italien a inventé la pile électrique en 1800, ancêtre de la batterie moderne.", answer: "UXVpIGVzdCBBbGVzc2FuZHJvIFZvbHRhID8=" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce physicien écossais a inventé le téléphone en 1876.", answer: "UXVpIGVzdCBBbGV4YW5kZXIgR3JhaGFtIEJlbGwgPw==" },
+      { clue: "Ce couple de scientifiques franco-polonais a découvert le radium et le polonium, remportant deux prix Nobel.", answer: "UXVpIHNvbnQgUGllcnJlIGV0IE1hcmllIEN1cmllID8=" },
+      { clue: "Cette machine, conçue par Charles Babbage au XIXe siècle, est considérée comme l'ancêtre de l'ordinateur.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtYWNoaW5lIGFuYWx5dGlxdWUgPw==" },
+      { clue: "Cette technique médicale, mise au point par Edward Jenner en 1796, a permis d'éradiquer la variole.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB2YWNjaW5hdGlvbiA/" },
+    ] },
+  ]},
+  { title: "Langues & Mots", clues: [
+    { value: 100, pool: [
+      { clue: "Cet auteur français du XVIIe siècle a écrit « Le Malade imaginaire » et « Tartuffe ».", answer: "UXVpIGVzdCBNb2xpw6hyZSA/" },
+      { clue: "Cette langue officielle du Brésil est aussi parlée au Portugal et en Angola.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwb3J0dWdhaXMgPw==" },
+      { clue: "Cette langue est la langue officielle de l'Espagne et de la majorité de l'Amérique latine.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VzcGFnbm9sID8=" },
+      { clue: "Cette langue germanique est la langue officielle de l'Allemagne, de l'Autriche et d'une partie de la Suisse.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FsbGVtYW5kID8=" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce mot français, utilisé pour saluer, est emprunté par de nombreuses langues étrangères.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtb3QgJ2JvbmpvdXInID8=" },
+      { clue: "Cet alphabet de 33 lettres est utilisé pour écrire le russe et d'autres langues slaves.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FscGhhYmV0IGN5cmlsbGlxdWUgPw==" },
+      { clue: "Ce mot d'origine française désigne un petit restaurant convivial servant une cuisine simple.", answer: "UXUnZXN0LWNlIHF1J3VuIGJpc3Ryb3QgPw==" },
+      { clue: "Cet alphabet, utilisé pour l'arabe, s'écrit de droite à gauche.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FscGhhYmV0IGFyYWJlID8=" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce dramaturge anglais a écrit « Hamlet » et « Roméo et Juliette ».", answer: "UXVpIGVzdCBXaWxsaWFtIFNoYWtlc3BlYXJlID8=" },
+      { clue: "Cette académie, fondée en 1635, veille sur la langue française et rédige son dictionnaire officiel.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FjYWTDqW1pZSBmcmFuw6dhaXNlID8=" },
+      { clue: "Cette langue officielle d'Israël a été relancée comme langue vivante au XXe siècle.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2jDqWJyZXUgPw==" },
+      { clue: "Ce dictionnaire français de référence porte le nom de son fondateur, éditeur du XIXe siècle.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBMYXJvdXNzZSA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette langue construite fut créée en 1887 pour faciliter la communication internationale.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VzcMOpcmFudG8gPw==" },
+      { clue: "Ce système d'écriture japonais utilise des idéogrammes empruntés au chinois.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBrYW5qaSA/" },
+      { clue: "Cette figure de style consiste à comparer deux éléments à l'aide d'un mot comparatif comme « comme ».", answer: "UXUnZXN0LWNlIHF1J3VuZSBjb21wYXJhaXNvbiA/" },
+      { clue: "Ce système d'écriture chinois utilise des caractères logographiques plutôt qu'un alphabet.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgc2lub2dyYW1tZXMgPw==" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cette langue est la plus parlée au monde en nombre de locuteurs natifs.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtYW5kYXJpbiA/" },
+      { clue: "Cette langue ancienne, mère des langues romanes comme le français et l'italien, était parlée dans la Rome antique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsYXRpbiA/" },
+      { clue: "Cette langue officielle de l'Inde s'écrit avec l'alphabet devanagari.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2hpbmRpID8=" },
+      { clue: "Ce phénomène linguistique désigne l'emprunt d'un mot d'une langue à une autre, comme « week-end » en français.", answer: "UXUnZXN0LWNlIHF1J3VuIGFuZ2xpY2lzbWUgPw==" },
+    ] },
+  ]},
+  { title: "Automobile", clues: [
+    { value: 100, pool: [
+      { clue: "Cet ingénieur autrichien a donné son nom à une célèbre marque de voitures de sport allemande.", answer: "UXVpIGVzdCBGZXJkaW5hbmQgUG9yc2NoZSA/" },
+      { clue: "Cette entreprise américaine, fondée par Henry Ford, a popularisé la production en chaîne avec le modèle T.", answer: "UXUnZXN0LWNlIHF1ZSBGb3JkID8=" },
+      { clue: "Cette marque française au losange a été fondée par Louis Renault en 1899.", answer: "UXUnZXN0LWNlIHF1ZSBSZW5hdWx0ID8=" },
+      { clue: "Ce type de véhicule fonctionne uniquement grâce à une batterie et un moteur électrique, sans essence.", answer: "UXUnZXN0LWNlIHF1J3VuZSB2b2l0dXJlIMOpbGVjdHJpcXVlID8=" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce type de moteur, inventé en 1893, fonctionne sans bougies d'allumage grâce à l'auto-inflammation.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtb3RldXIgZGllc2VsID8=" },
+      { clue: "Ce dispositif de sécurité, obligatoire depuis les années 1970, retient les occupants en cas de choc.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjZWludHVyZSBkZSBzw6ljdXJpdMOpID8=" },
+      { clue: "Cette marque japonaise, connue pour sa fiabilité, produit notamment la Corolla.", answer: "UXUnZXN0LWNlIHF1ZSBUb3lvdGEgPw==" },
+      { clue: "Ce dispositif de sécurité se gonfle automatiquement en cas de choc pour protéger les occupants.", answer: "UXUnZXN0LWNlIHF1J3VuIGFpcmJhZyA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce fondateur italien a donné son nom à un cheval cabré rouge sur fond jaune.", answer: "UXVpIGVzdCBFbnpvIEZlcnJhcmkgPw==" },
+      { clue: "Cette compétition automobile, la plus célèbre course d'endurance, se déroule chaque année en France depuis 1923.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgMjQgSGV1cmVzIGR1IE1hbnMgPw==" },
+      { clue: "Cette marque allemande de luxe utilise un logo à hélice bleue et blanche.", answer: "UXUnZXN0LWNlIHF1ZSBCTVcgPw==" },
+      { clue: "Ce type de transmission permet de changer de vitesse automatiquement sans intervention du conducteur.", answer: "UXUnZXN0LWNlIHF1J3VuZSBib8OudGUgYXV0b21hdGlxdWUgPw==" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette voiture allemande au design arrondi et emblématique fut produite de 1938 à 2003.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBDb2NjaW5lbGxlIChWb2xrc3dhZ2VuKSA/" },
+      { clue: "Cette catégorie de course automobile réunit les monoplaces les plus rapides du monde, avec des Grands Prix disputés sur cinq continents.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBGb3JtdWxlIDEgPw==" },
+      { clue: "Cette marque italienne de voitures de luxe, basée à Sant'Agata Bolognese, utilise un taureau comme emblème.", answer: "UXUnZXN0LWNlIHF1ZSBMYW1ib3JnaGluaSA/" },
+      { clue: "Ce constructeur suédois, réputé pour la sécurité de ses véhicules, fut racheté par un groupe chinois en 2010.", answer: "UXUnZXN0LWNlIHF1ZSBWb2x2byA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cet homme d'affaires franco-libano-brésilien a dirigé l'alliance Renault-Nissan avant une chute spectaculaire.", answer: "UXVpIGVzdCBDYXJsb3MgR2hvc24gPw==" },
+      { clue: "Ce constructeur américain, dirigé par Elon Musk, a démocratisé la voiture électrique haut de gamme.", answer: "UXUnZXN0LWNlIHF1ZSBUZXNsYSA/" },
+      { clue: "Cet ingénieur allemand a déposé le brevet du premier véhicule à moteur à combustion en 1886.", answer: "UXVpIGVzdCBLYXJsIEJlbnogPw==" },
+      { clue: "Cette technologie permet à une voiture de rouler sans conducteur grâce à des capteurs et une intelligence artificielle.", answer: "UXUnZXN0LWNlIHF1J3VuZSB2b2l0dXJlIGF1dG9ub21lID8=" },
+    ] },
+  ]},
+  { title: "Mode", clues: [
+    { value: 100, pool: [
+      { clue: "Cette créatrice française a révolutionné la mode féminine avec le tailleur et le parfum N°5.", answer: "UXVpIGVzdCBDb2NvIENoYW5lbCA/" },
+      { clue: "Ce vêtement traditionnel japonais, porté avec une large ceinture appelée obi, se ferme sur la gauche.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBraW1vbm8gPw==" },
+      { clue: "Ce vêtement couvre les jambes séparément et se porte quotidiennement à travers le monde.", answer: "UXUnZXN0LWNlIHF1J3VuIHBhbnRhbG9uID8=" },
+      { clue: "Cette marque de sport américaine, fondée en 1964, utilise une virgule comme logo.", answer: "UXUnZXN0LWNlIHF1ZSBOaWtlID8=" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce vêtement en toile de coton résistant, popularisé par les cow-boys américains, se décline en denim.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBqZWFuID8=" },
+      { clue: "Cet accessoire porté au cou ou en foulard est devenu emblématique de la maison Hermès.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYXJyw6kgKGZvdWxhcmQpID8=" },
+      { clue: "Cette maison de couture française, fondée en 1854, est identifiable à son motif de lettres entrelacées.", answer: "UXUnZXN0LWNlIHF1ZSBMb3VpcyBWdWl0dG9uID8=" },
+      { clue: "Ce sac à main emblématique de la maison Hermès porte le nom d'une chanteuse et actrice anglo-française.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCaXJraW4gPw==" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce couturier français a lancé le style « New Look » en 1947.", answer: "UXVpIGVzdCBDaHJpc3RpYW4gRGlvciA/" },
+      { clue: "Cette chaussure à talon fin et pointu, popularisée par Roger Vivier, est un incontournable de la mode féminine.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VzY2FycGluID8=" },
+      { clue: "Ce créateur allemand a dirigé Chanel pendant plus de 30 ans jusqu'à sa mort en 2019.", answer: "UXVpIGVzdCBLYXJsIExhZ2VyZmVsZCA/" },
+      { clue: "Cette matière naturelle, produite par des vers, est utilisée pour tisser des tissus fins et brillants.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBzb2llID8=" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Ce terme désigne les vêtements sur mesure fabriqués selon des techniques artisanales strictes, à Paris.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBoYXV0ZSBjb3V0dXJlID8=" },
+      { clue: "Cette marque italienne de luxe, fondée en 1921, est reconnue pour son motif de losanges beige et marron.", answer: "UXUnZXN0LWNlIHF1ZSBHdWNjaSA/" },
+      { clue: "Cette marque espagnole de prêt-à-porter à bas coût, fondée par Amancio Ortega, est devenue l'une des plus grandes chaînes de mode au monde.", answer: "UXUnZXN0LWNlIHF1ZSBaYXJhID8=" },
+      { clue: "Ce magazine de mode américain, fondé en 1892, est dirigé depuis 1988 par Anna Wintour.", answer: "UXUnZXN0LWNlIHF1ZSBWb2d1ZSA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce couturier français, ancien assistant de Dior, a démocratisé le smoking pour femme.", answer: "UXVpIGVzdCBZdmVzIFNhaW50IExhdXJlbnQgPw==" },
+      { clue: "Cette semaine d'événements, organisée deux fois par an dans plusieurs capitales, présente les collections des grands créateurs.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBGYXNoaW9uIFdlZWsgPw==" },
+      { clue: "Cette créatrice italienne a fondé sa maison de mode en 1927 et était connue pour son style extravagant, rivale de Chanel.", answer: "UXVpIGVzdCBFbHNhIFNjaGlhcGFyZWxsaSA/" },
+      { clue: "Ce styliste britannique, connu pour ses créations provocantes, a dirigé la maison Givenchy avant sa mort en 2010.", answer: "UXVpIGVzdCBBbGV4YW5kZXIgTWNRdWVlbiA/" },
+    ] },
+  ]},
+  { title: "Célébrités", clues: [
+    { value: 100, pool: [
+      { clue: "Cet acteur et réalisateur britannique du cinéma muet incarnait le personnage de Charlot.", answer: "UXVpIGVzdCBDaGFybGllIENoYXBsaW4gPw==" },
+      { clue: "Cette princesse britannique, surnommée « la princesse du peuple », est décédée dans un accident à Paris en 1997.", answer: "UXVpIGVzdCBEaWFuYSBTcGVuY2VyID8=" },
+      { clue: "Ce chanteur canadien est devenu une star mondiale dès l'adolescence avec la chanson « Baby ».", answer: "UXVpIGVzdCBKdXN0aW4gQmllYmVyID8=" },
+      { clue: "Cette actrice et productrice britannique incarne Hermione Granger dans la saga Harry Potter.", answer: "UXVpIGVzdCBFbW1hIFdhdHNvbiA/" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cette actrice et icône américaine des années 1950 a joué dans « Sept ans de réflexion ».", answer: "UXVpIGVzdCBNYXJpbHluIE1vbnJvZSA/" },
+      { clue: "Ce boxeur et homme d'affaires américain, né Cassius Clay, s'est converti à l'islam en 1964.", answer: "UXVpIGVzdCBNb2hhbWVkIEFsaSA/" },
+      { clue: "Ce chanteur américain, surnommé « The Weeknd », s'est fait connaître avec l'album Beauty Behind the Madness.", answer: "UXVpIGVzdCBUaGUgV2Vla25kID8=" },
+      { clue: "Ce joueur de basket américain, surnommé « His Airness », a remporté six titres NBA avec les Chicago Bulls.", answer: "UXVpIGVzdCBNaWNoYWVsIEpvcmRhbiA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce chanteur britannique flamboyant menait le groupe Queen jusqu'à sa mort en 1991.", answer: "UXVpIGVzdCBGcmVkZGllIE1lcmN1cnkgPw==" },
+      { clue: "Cette animatrice et femme d'affaires américaine possède l'un des talk-shows les plus regardés de l'histoire de la télévision.", answer: "UXVpIGVzdCBPcHJhaCBXaW5mcmV5ID8=" },
+      { clue: "Cette actrice australienne a incarné Harley Quinn dans plusieurs films du DCEU.", answer: "UXVpIGVzdCBNYXJnb3QgUm9iYmllID8=" },
+      { clue: "Ce rappeur et homme d'affaires américain, mari de Beyoncé, a fondé le label Roc Nation.", answer: "UXVpIGVzdCBKYXktWiA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cet acteur américain a remporté l'Oscar pour « The Revenant » après plusieurs nominations.", answer: "UXVpIGVzdCBMZW9uYXJkbyBEaUNhcHJpbyA/" },
+      { clue: "Ce fondateur sud-africain de Tesla et SpaceX est devenu l'une des personnes les plus riches du monde.", answer: "UXVpIGVzdCBFbG9uIE11c2sgPw==" },
+      { clue: "Cette chanteuse américaine, connue pour « Shake It Off » et « Anti-Hero », domine les tournées mondiales.", answer: "UXVpIGVzdCBUYXlsb3IgU3dpZnQgPw==" },
+      { clue: "Cet acteur américain incarne le Joker dans le film éponyme de 2019, pour lequel il a reçu un Oscar.", answer: "UXVpIGVzdCBKb2FxdWluIFBob2VuaXggPw==" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cette monarque britannique a régné plus de 70 ans, un record pour le Royaume-Uni.", answer: "UXVpIGVzdCBsYSByZWluZSBFbGl6YWJldGggSUkgPw==" },
+      { clue: "Cette chanteuse américaine, surnommée « Queen Bey », a débuté dans le groupe Destiny's Child.", answer: "UXVpIGVzdCBCZXlvbmPDqSA/" },
+      { clue: "Ce physicien allemand, auteur de la théorie de la relativité, est devenu une icône populaire.", answer: "UXVpIGVzdCBBbGJlcnQgRWluc3RlaW4gPw==" },
+      { clue: "Cet activiste indien a mené la lutte pacifique pour l'indépendance de son pays face à l'Empire britannique.", answer: "UXVpIGVzdCBHYW5kaGkgPw==" },
+    ] },
+  ]},
+  { title: "Histoire du Monde", clues: [
+    { value: 100, pool: [
+      { clue: "Ce peuple de l'Égypte antique a construit les grandes pyramides de Gizeh.", answer: "UXVpIHNvbnQgbGVzIMOJZ3lwdGllbnMgPw==" },
+      { clue: "Cet empire fondé par Rome a duré plusieurs siècles avant sa chute en Occident en 476.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VtcGlyZSByb21haW4gPw==" },
+      { clue: "Cet empire, dirigé par des empereurs, dominait le Mexique avant l'arrivée des conquistadors espagnols.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VtcGlyZSBhenTDqHF1ZSA/" },
+      { clue: "Ce peuple de l'ancienne Mésopotamie a inventé l'écriture cunéiforme vers 3200 avant J.-C.", answer: "UXVpIHNvbnQgbGVzIFN1bcOpcmllbnMgPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce mur a séparé Berlin-Est et Berlin-Ouest de 1961 à 1989.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtdXIgZGUgQmVybGluID8=" },
+      { clue: "Cette dynastie chinoise a fait construire une grande partie de la Grande Muraille pour se protéger des invasions.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkeW5hc3RpZSBNaW5nID8=" },
+      { clue: "Cette révolution de 1917 a renversé le tsar de Russie et porté les bolcheviks au pouvoir.", answer: "UXUnZXN0LWNlIHF1ZSBsYSByw6l2b2x1dGlvbiBydXNzZSA/" },
+      { clue: "Ce mur de pierre, construit par les Romains en Angleterre, marquait la limite nord de l'Empire romain en Bretagne.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtdXIgZCdIYWRyaWVuID8=" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce navigateur génois, financé par les rois d'Espagne, atteint les Amériques en 1492.", answer: "UXVpIGVzdCBDaHJpc3RvcGhlIENvbG9tYiA/" },
+      { clue: "Cette période de bouleversements intellectuels et artistiques en Europe débute au XIVe siècle en Italie.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBSZW5haXNzYW5jZSA/" },
+      { clue: "Cette épidémie du XIVe siècle a tué environ un tiers de la population européenne.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwZXN0ZSBub2lyZSA/" },
+      { clue: "Cette dynastie égyptienne a vu régner la célèbre reine Cléopâtre, dernière pharaonne d'Égypte.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkeW5hc3RpZSBwdG9sw6ltYcOvcXVlID8=" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette guerre mondiale, déclenchée en 1939, s'est achevée en 1945 après la capitulation du Japon.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBTZWNvbmRlIEd1ZXJyZSBtb25kaWFsZSA/" },
+      { clue: "Cet empereur français a été vaincu à Waterloo en 1815.", answer: "UXVpIGVzdCBOYXBvbMOpb24gQm9uYXBhcnRlID8=" },
+      { clue: "Cette déclaration américaine de 1776 proclame l'indépendance des treize colonies vis-à-vis du Royaume-Uni.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBEw6ljbGFyYXRpb24gZCdpbmTDqXBlbmRhbmNlID8=" },
+      { clue: "Ce leader sud-africain a lutté contre l'apartheid et est devenu le premier président noir du pays en 1994.", answer: "UXVpIGVzdCBOZWxzb24gTWFuZGVsYSA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cette guerre froide a opposé les États-Unis et l'URSS de la fin des années 1940 à 1991.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBHdWVycmUgZnJvaWRlID8=" },
+      { clue: "Cet empire, dirigé par Gengis Khan, fut le plus vaste empire terrestre contigu de l'histoire.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VtcGlyZSBtb25nb2wgPw==" },
+      { clue: "Cette conférence de 1945, réunissant Churchill, Roosevelt et Staline, a redessiné les frontières de l'Europe d'après-guerre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjb25mw6lyZW5jZSBkZSBZYWx0YSA/" },
+      { clue: "Cet attentat du 11 septembre 2001 a visé les tours jumelles du World Trade Center à New York.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgYXR0ZW50YXRzIGR1IDExIFNlcHRlbWJyZSA/" },
+    ] },
+  ]},
+  { title: "Économie", clues: [
+    { value: 100, pool: [
+      { clue: "Cette monnaie unique est utilisée par une vingtaine de pays de l'Union européenne.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2V1cm8gPw==" },
+      { clue: "Ce terme désigne l'échange de biens ou de services sans utiliser d'argent.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0cm9jID8=" },
+      { clue: "Ce terme désigne l'ensemble des biens et services produits par un pays en une année.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBQSUIgPw==" },
+      { clue: "Cette taxe, prélevée sur la consommation, est incluse dans le prix des produits en France.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBUVkEgPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cette loi économique énonce que les prix évoluent selon l'offre et la demande.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBsb2kgZGUgbCdvZmZyZSBldCBkZSBsYSBkZW1hbmRlID8=" },
+      { clue: "Cette institution basée à Washington prête aux pays en difficulté et surveille la stabilité financière mondiale.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBGb25kcyBtb27DqXRhaXJlIGludGVybmF0aW9uYWwgPw==" },
+      { clue: "Cette banque centrale, basée à Francfort, fixe la politique monétaire de la zone euro.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBCYW5xdWUgY2VudHJhbGUgZXVyb3DDqWVubmUgPw==" },
+      { clue: "Ce terme désigne la part de la population active sans emploi et en recherche de travail.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaMO0bWFnZSA/" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Ce marché permet d'acheter et de vendre des actions d'entreprises cotées.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBCb3Vyc2UgPw==" },
+      { clue: "Cette monnaie numérique décentralisée, créée en 2009, fonctionne sans banque centrale.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiaXRjb2luID8=" },
+      { clue: "Cette organisation internationale, fondée en 1995, régule le commerce entre ses pays membres.", answer: "UXUnZXN0LWNlIHF1ZSBsJ09yZ2FuaXNhdGlvbiBtb25kaWFsZSBkdSBjb21tZXJjZSA/" },
+      { clue: "Ce type d'entreprise appartient à ses actionnaires qui détiennent des parts appelées actions.", answer: "UXUnZXN0LWNlIHF1J3VuZSBzb2Npw6l0w6kgYW5vbnltZSA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette hausse généralisée et durable des prix réduit le pouvoir d'achat.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2luZmxhdGlvbiA/" },
+      { clue: "Cet économiste écossais du XVIIIe siècle est considéré comme le père du libéralisme économique avec « La Richesse des nations ».", answer: "UXVpIGVzdCBBZGFtIFNtaXRoID8=" },
+      { clue: "Cet économiste britannique du XXe siècle a préconisé l'intervention de l'État pour relancer l'économie en temps de crise.", answer: "UXVpIGVzdCBKb2huIE1heW5hcmQgS2V5bmVzID8=" },
+      { clue: "Cette pratique consiste à investir dans plusieurs actifs différents pour réduire les risques financiers.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkaXZlcnNpZmljYXRpb24gPw==" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Cette crise financière de 1929, née à Wall Street, a plongé le monde dans une dépression économique majeure.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBrcmFjaCBkZSAxOTI5ID8=" },
+      { clue: "Cet économiste allemand du XIXe siècle, auteur du « Capital », a théorisé la lutte des classes.", answer: "UXVpIGVzdCBLYXJsIE1hcnggPw==" },
+      { clue: "Cette crise financière de 2008, née des prêts hypothécaires à risque aux États-Unis, a provoqué une récession mondiale.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjcmlzZSBkZXMgc3VicHJpbWVzID8=" },
+      { clue: "Cet économiste indien, prix Nobel d'économie 1998, a travaillé sur la pauvreté et le développement humain.", answer: "UXVpIGVzdCBBbWFydHlhIFNlbiA/" },
+    ] },
+  ]},
+  { title: "Nature & Environnement", clues: [
+    { value: 100, pool: [
+      { clue: "Ce processus permet aux plantes de transformer la lumière du soleil en énergie.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwaG90b3N5bnRow6hzZSA/" },
+      { clue: "Cette vaste étendue d'arbres tropicaux en Amérique du Sud est surnommée le « poumon de la planète ».", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb3LDqnQgYW1hem9uaWVubmUgPw==" },
+      { clue: "Ce phénomène naturel forme un arc de couleurs dans le ciel après la pluie, grâce à la réfraction de la lumière.", answer: "UXUnZXN0LWNlIHF1J3VuIGFyYy1lbi1jaWVsID8=" },
+      { clue: "Cette pratique consiste à trier et transformer les déchets pour en réutiliser la matière.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByZWN5Y2xhZ2UgPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Ce gaz, produit par la combustion des énergies fossiles, est le principal responsable du réchauffement climatique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkaW94eWRlIGRlIGNhcmJvbmUgKENPMikgPw==" },
+      { clue: "Ce cycle naturel décrit le mouvement continu de l'eau entre océans, atmosphère et sols.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjeWNsZSBkZSBsJ2VhdSA/" },
+      { clue: "Ce type d'agriculture évite les pesticides et engrais chimiques de synthèse.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FncmljdWx0dXJlIGJpb2xvZ2lxdWUgPw==" },
+      { clue: "Cette énergie renouvelable capte la lumière du soleil grâce à des panneaux pour produire de l'électricité.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpbmVyZ2llIHNvbGFpcmUgPw==" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cette couche de l'atmosphère nous protège des rayons ultraviolets du Soleil.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjb3VjaGUgZCdvem9uZSA/" },
+      { clue: "Ce phénomène climatique périodique dans le Pacifique modifie les températures océaniques et les régimes de pluie mondiaux.", answer: "UXUnZXN0LWNlIHF1J0VsIE5pw7FvID8=" },
+      { clue: "Ce phénomène désigne la disparition progressive des forêts, souvent liée à l'agriculture ou l'exploitation du bois.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkw6lmb3Jlc3RhdGlvbiA/" },
+      { clue: "Cette organisation non gouvernementale, fondée en 1971, milite pour la protection de l'environnement.", answer: "UXUnZXN0LWNlIHF1ZSBHcmVlbnBlYWNlID8=" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette source d'énergie renouvelable exploite la force du vent grâce à de grandes hélices.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpbmVyZ2llIMOpb2xpZW5uZSA/" },
+      { clue: "Ce traité international de 2015 vise à limiter le réchauffement climatique bien en dessous de 2°C.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FjY29yZCBkZSBQYXJpcyA/" },
+      { clue: "Cette activiste suédoise, née en 2003, a lancé le mouvement des grèves scolaires pour le climat.", answer: "UXVpIGVzdCBHcmV0YSBUaHVuYmVyZyA/" },
+      { clue: "Ce phénomène décrit l'augmentation du niveau des océans, notamment liée à la fonte des glaces.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtb250w6llIGRlcyBlYXV4ID8=" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce phénomène de fonte accélérée touche les glaciers et la banquise à cause du réchauffement climatique.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb250ZSBkZXMgZ2xhY2VzID8=" },
+      { clue: "Cette sixième extinction de masse en cours, causée par l'activité humaine, menace un million d'espèces selon l'ONU.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8Opcm9zaW9uIGRlIGxhIGJpb2RpdmVyc2l0w6kgPw==" },
+      { clue: "Cette conférence annuelle de l'ONU réunit les pays du monde pour négocier des actions contre le changement climatique.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBDT1AgPw==" },
+      { clue: "Ce concept vise à répondre aux besoins présents sans compromettre ceux des générations futures.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6l2ZWxvcHBlbWVudCBkdXJhYmxlID8=" },
+    ] },
+  ]},
+  { title: "Géographie du Monde", clues: [
+    { value: 100, pool: [
+      { clue: "Cette mer bordée par cinq pays est en réalité le plus grand lac du monde.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtZXIgQ2FzcGllbm5lID8=" },
+      { clue: "Ce pays d'Asie compte le plus grand nombre d'habitants au monde depuis 2023.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0luZGUgPw==" },
+      { clue: "Ce continent est le plus grand et le plus peuplé du monde.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FzaWUgPw==" },
+      { clue: "Ce pays d'Amérique du Nord, le plus étendu du continent, a pour capitale Ottawa.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBDYW5hZGEgPw==" },
+    ] },
+    { value: 200, pool: [
+      { clue: "Cette ville italienne, construite sur une lagune, se déplace en gondole plutôt qu'en voiture.", answer: "UXUnZXN0LWNlIHF1ZSBWZW5pc2UgPw==" },
+      { clue: "Ce canal artificiel relie la mer Méditerranée à la mer Rouge depuis 1869.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYW5hbCBkZSBTdWV6ID8=" },
+      { clue: "Cette capitale française est traversée par la Seine et abrite la tour Eiffel.", answer: "UXUnZXN0LWNlIHF1ZSBQYXJpcyA/" },
+      { clue: "Ce désert est le plus grand désert froid du monde, situé en grande partie en Antarctique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6lzZXJ0IGFudGFyY3RpcXVlID8=" },
+    ] },
+    { value: 300, pool: [
+      { clue: "Cette île française de l'océan Indien est connue pour son piton de la Fournaise, un volcan actif.", answer: "UXUnZXN0LWNlIHF1ZSBMYSBSw6l1bmlvbiA/" },
+      { clue: "Ce fleuve d'Amérique du Sud est celui qui transporte le plus grand débit d'eau au monde.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FtYXpvbmUgPw==" },
+      { clue: "Cette péninsule européenne regroupe l'Espagne et le Portugal.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBww6luaW5zdWxlIEliw6lyaXF1ZSA/" },
+      { clue: "Ce pays africain, le plus peuplé du continent, a pour capitale Abuja et pour plus grande ville Lagos.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBOaWfDqXJpYSA/" },
+    ] },
+    { value: 400, pool: [
+      { clue: "Cette chute d'eau, à la frontière entre le Canada et les États-Unis, est l'une des plus visitées au monde.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgY2h1dGVzIGR1IE5pYWdhcmEgPw==" },
+      { clue: "Ce point culminant de l'Afrique, un volcan endormi, se situe en Tanzanie.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBLaWxpbWFuZGphcm8gPw==" },
+      { clue: "Cette barrière de corail, la plus grande structure vivante du monde, se trouve au large de l'Australie.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBHcmFuZGUgQmFycmnDqHJlIGRlIGNvcmFpbCA/" },
+      { clue: "Ce lac d'Asie centrale, le plus profond du monde, se trouve en Sibérie.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsYWMgQmHDr2thbCA/" },
+    ] },
+    { value: 500, pool: [
+      { clue: "Ce point le plus profond des océans se trouve dans l'océan Pacifique, près des îles Mariannes.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb3NzZSBkZXMgTWFyaWFubmVzID8=" },
+      { clue: "Ce pays d'Asie du Sud-Est est constitué de plus de 17 000 îles, ce qui en fait le plus grand archipel du monde.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0luZG9uw6lzaWUgPw==" },
+      { clue: "Ce fleuve européen, le plus long du continent, traverse la Russie et se jette dans la mer Caspienne.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBWb2xnYSA/" },
+      { clue: "Ce pays d'Océanie, formé de deux îles principales, est situé au sud-est de l'Australie.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBOb3V2ZWxsZS1aw6lsYW5kZSA/" },
+    ] },
+  ]},
+];
+
+const ME_KEY = 'duelquiz_me_v3';
+let me = null;
+let room = null;
+let state = null;
+let pollTimer = null;
+let prevScores = {};
+let lastCelebratedKey = null;
+
+let boardSig = null;
+let overlaySig = null;
+let roomBarBuiltFor = null;
+let seenReactionIds = new Set();
+let chatSig = null;
+let seenChatIds = new Set();
+
+function resetRenderCaches(){
+  boardSig = null;
+  overlaySig = null;
+  roomBarBuiltFor = null;
+  lastCelebratedKey = null;
+  prevScores = {};
+  seenReactionIds = new Set();
+  chatSig = null;
+  seenChatIds = new Set();
+}
+
+let audioCtx = null;
+function getAudioCtx(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }catch(e){ return null; }
+}
+function playTone(freq, duration, type, gainVal, delay){
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const t0 = ctx.currentTime + (delay || 0);
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(gainVal || 0.12, t0 + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + duration + 0.03);
+}
+function playSound(name){
+  switch(name){
+    // Neutral UI tap: single short, soft blip.
+    case 'click': playTone(600, 0.045, 'sine', 0.06); break;
+    // Opening a clue: a bright two-note "ding-dong" rising chime, distinct triangle timbre.
+    case 'select': playTone(523, 0.09, 'triangle', 0.1); playTone(784, 0.13, 'triangle', 0.09, 0.07); break;
+    // Buzzing in: low, harsh, percussive sawtooth "buzzer" hit — nothing else sounds like this.
+    case 'buzz': playTone(150, 0.05, 'square', 0.16); playTone(120, 0.18, 'sawtooth', 0.14, 0.03); break;
+    // Correct answer: cheerful three-note major arpeggio climbing up.
+    case 'correct': playTone(523, 0.09, 'sine', 0.12); playTone(659, 0.1, 'sine', 0.12, 0.08); playTone(880, 0.2, 'sine', 0.13, 0.16); break;
+    // Wrong answer: a dull, descending two-note "womp womp" on a detuned square wave.
+    case 'incorrect': playTone(200, 0.16, 'square', 0.1); playTone(140, 0.28, 'square', 0.1, 0.14); break;
+    // Copy-to-clipboard: single crisp high click, quicker/higher than the generic click.
+    case 'copy': playTone(1100, 0.035, 'sine', 0.06); break;
+    // Joining a room: a longer ascending three-note fanfare.
+    case 'join': playTone(392, 0.09, 'triangle', 0.1); playTone(587, 0.1, 'triangle', 0.1, 0.08); playTone(784, 0.16, 'triangle', 0.1, 0.17); break;
+    // New chat message: a soft two-note "pop" notification, mid-range sine.
+    case 'chat': playTone(700, 0.05, 'sine', 0.07); playTone(950, 0.07, 'sine', 0.06, 0.06); break;
+    default: playTone(500, 0.07, 'sine', 0.08);
+  }
+}
+
+function uid(){ return 'p' + Math.random().toString(36).slice(2,9); }
+
+function randomRoomCode(len){
+  let s = '';
+  for(let i=0;i<len;i++) s += ROOM_CHARS[Math.floor(Math.random()*ROOM_CHARS.length)];
+  return s;
+}
+
+function stateKey(){ return 'duelquiz_state_v3:' + room; }
+
+function splitRounds(categoryIndices, roundsCount){
+  if(roundsCount <= 1 || categoryIndices.length <= 1) return [categoryIndices.slice()];
+  const perGroup = Math.ceil(categoryIndices.length / roundsCount);
+  const groups = [];
+  for(let i = 0; i < categoryIndices.length; i += perGroup){
+    groups.push(categoryIndices.slice(i, i + perGroup));
+  }
+  return groups;
+}
+
+function freshBoardState(config){
+  return {
+    config: config,
+    answered: CATEGORIES.map(c => c.clues.map(() => false)),
+    resolved: CATEGORIES.map(c => c.clues.map(tier => Math.floor(Math.random() * tier.pool.length))),
+    scores: {},
+    active: null,
+    round: 0,
+    started: false,
+    chat: []
+  };
+}
+
+// Picks the clue variant chosen for this room/game for a given category+row.
+// state.resolved stores one random pool-index per cell so every player in the
+// room sees the exact same clue, while different games/rooms get variety.
+function getClue(s, ci, row){
+  const tier = CATEGORIES[ci].clues[row];
+  const picks = s && s.resolved && s.resolved[ci];
+  const idx = (picks && typeof picks[row] === 'number' && tier.pool[picks[row]]) ? picks[row] : 0;
+  const variant = tier.pool[idx] || tier.pool[0];
+  return { value: tier.value, clue: variant.clue, answer: variant.answer };
+}
+
+function newActive(cat, row, autoBuzzId){
+  return {
+    cat, row,
+    buzzed: autoBuzzId || null,
+    tried: [],
+    decided: false, correct: false, resultMsg: null, revealed: false
+  };
+}
+
+async function loadMe(){
+  try{
+    const r = await window.storage.get(ME_KEY, false);
+    if(r && r.value) return JSON.parse(r.value);
+  }catch(e){}
+  return null;
+}
+
+async function saveMe(m){
+  try{ await window.storage.set(ME_KEY, JSON.stringify(m), false); }catch(e){ console.error('save me failed', e); }
+}
+
+async function loadState(){
+  try{
+    const r = await window.storage.get(stateKey(), true);
+    if(r && r.value) return JSON.parse(r.value);
+  }catch(e){}
+  return null;
+}
+
+let suppressPollUntil = 0;
+async function saveState(s){
+  suppressPollUntil = Date.now() + 1200;
+  try{ await window.storage.set(stateKey(), JSON.stringify(s), true); }catch(e){ console.error('save state failed', e); }
+}
+
+// Fills in fields that may be missing on state loaded from an older session,
+// so older rooms don't crash when new features (clue variants, chat) are added.
+function migrateState(s){
+  if(!s) return s;
+  if(!Array.isArray(s.resolved) || s.resolved.length !== CATEGORIES.length){
+    s.resolved = CATEGORIES.map(c => c.clues.map(tier => Math.floor(Math.random() * tier.pool.length)));
+  }
+  if(!Array.isArray(s.chat)) s.chat = [];
+  return s;
+}
+
+// Every action that changes shared game state goes through here: it fetches the
+// very latest state from storage right before mutating and saving, instead of
+// mutating a possibly-stale local copy. That closes almost all of the race
+// window that used to cause one player's action to silently overwrite (and
+// appear to "roll back") another's.
+async function mutateState(mutator){
+  if(!state) return false;
+  const fresh = migrateState(await loadState()) || state;
+  const applied = mutator(fresh);
+  state = fresh;
+  renderAll();
+  if(applied){
+    await saveState(state);
+  }
+  return applied;
+}
+
+async function ensureJoined(rawConfig){
+  let s = migrateState(await loadState());
+  const isValid = s && Array.isArray(s.answered) && s.answered.length === CATEGORIES.length &&
+                   s.config && Array.isArray(s.config.rounds) && s.config.rounds.length > 0;
+  if(!isValid){
+    const rounds = splitRounds(rawConfig.categoryIndices, rawConfig.roundsCount);
+    const fresh = freshBoardState({ mode: rawConfig.mode, rounds });
+    if(s && s.scores) fresh.scores = s.scores;
+    s = fresh;
+    await saveState(s);
+  }
+  if(typeof s.round !== 'number') s.round = 0;
+  if(!s.scores[me.id]){
+    s.scores[me.id] = { name: me.name, color: me.color, avatar: me.avatar, score: 0 };
+    await saveState(s);
+  }
+  return s;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function revealAnswer(encoded){
+  try{ return decodeURIComponent(escape(atob(encoded))); }catch(e){ return ''; }
+}
+
+async function copyToClipboard(text){
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch(e){}
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){
+    return false;
+  }
+}
+
+function normalizeText(str){
+  return str.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9\s]/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function stripLeadingArticles(s){
+  let prev;
+  do{
+    prev = s;
+    s = s.replace(/^(le|la|les|l|un|une|des|du|de|au|aux)\s+/,'');
+  } while(s !== prev);
+  return s;
+}
+
+function extractCore(answer){
+  let a = answer.replace(/\?+\s*$/,'').trim();
+  a = a.replace(/^qu[' ]?est[- ]ce que\s+/i,'');
+  a = a.replace(/^qu[' ]?est[- ]ce qui\s+/i,'');
+  a = a.replace(/^qui est\s+/i,'');
+  a = a.replace(/^qui sont\s+/i,'');
+  let core = normalizeText(a);
+  core = stripLeadingArticles(core);
+  return core;
+}
+
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  if(m === 0) return n;
+  if(n === 0) return m;
+  const dp = Array.from({length: m+1}, () => new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0] = i;
+  for(let j=0;j<=n;j++) dp[0][j] = j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      const cost = a[i-1] === b[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
+    }
+  }
+  return dp[m][n];
+}
+
+function checkAnswer(userInput, correctAnswer){
+  const core = extractCore(correctAnswer);
+  let user = normalizeText(userInput);
+  user = stripLeadingArticles(user);
+  if(!user) return false;
+  if(user === core) return true;
+  // ignore missing/extra spaces (e.g. "world war" vs "worldwar")
+  if(user.replace(/\s+/g,'') === core.replace(/\s+/g,'')) return true;
+  if(core.length > 3 && (user.includes(core) || core.includes(user)) && user.length >= core.length * 0.4) return true;
+  const dist = levenshtein(user, core);
+  const threshold = Math.max(2, Math.ceil(core.length * 0.3));
+  if(dist <= threshold) return true;
+  // word-level fallback: for multi-word answers, accept if most significant words match closely
+  const coreWords = core.split(' ').filter(w => w.length > 2);
+  if(coreWords.length > 1){
+    const userWords = user.split(' ').filter(Boolean);
+    let matched = 0;
+    coreWords.forEach(cw => {
+      const ok = userWords.some(uw => uw === cw || levenshtein(uw, cw) <= Math.max(1, Math.ceil(cw.length * 0.3)));
+      if(ok) matched++;
+    });
+    if(matched / coreWords.length >= 0.7) return true;
+  }
+  return false;
+}
+
+function avatarGlyph(p){
+  return p.avatar ? p.avatar : (p.name || '?').trim().charAt(0).toUpperCase();
+}
+
+function renderMeBadge(){
+  const el = document.getElementById('meBadge');
+  el.innerHTML = '<div class="me-badge" id="meBadgeBtn" title="Modifier mon profil"><span class="player-avatar" style="background:' + me.color + '">' + escapeHtml(avatarGlyph(me)) + '</span>' + escapeHtml(me.name) + '</div>';
+  document.getElementById('meBadgeBtn').addEventListener('click', showProfileEditor);
+}
+
+function renderRoomBar(){
+  const el = document.getElementById('roomBar');
+  if(roomBarBuiltFor !== room){
+    roomBarBuiltFor = room;
+    el.innerHTML =
+      '<div class="room-left">' +
+        '<span>Salle</span>' +
+        '<span class="room-code-wrap" title="Survolez pour révéler">' +
+          '<span class="room-code room-code-hidden" id="roomCodeText"></span>' +
+          '<span class="room-code-reveal-hint">survoler pour révéler</span>' +
+        '</span>' +
+        '<button class="copy-btn" id="copyBtn">' + ICON_COPY + '<span id="copyBtnLabel">Copier le code</span></button>' +
+        '<span class="leave-link" id="leaveLink">Changer de salle</span>' +
+      '</div>' +
+      '<div class="room-right">' +
+        '<span class="mode-pill" id="modePill"></span>' +
+        '<span id="playerCountText"></span>' +
+        '<span class="progress-text" id="progressText"></span>' +
+      '</div>';
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      const b = document.getElementById('copyBtn');
+      const label = document.getElementById('copyBtnLabel');
+      const ok = await copyToClipboard(room);
+      playSound('copy');
+      if(ok){
+        b.innerHTML = ICON_CHECK + '<span>Copié !</span>';
+        b.classList.add('copied');
+      } else {
+        label.textContent = 'Échec, sélectionnez le code';
+      }
+      setTimeout(() => {
+        b.innerHTML = ICON_COPY + '<span id="copyBtnLabel">Copier le code</span>';
+        b.classList.remove('copied');
+      }, 1500);
+    });
+    document.getElementById('leaveLink').addEventListener('click', () => {
+      room = null;
+      if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+      resetRenderCaches();
+      showJoinPrompt();
+    });
+  }
+  const count = Object.keys(state.scores).length;
+  const catIndices = state.config.rounds.reduce((a,g) => a.concat(g), []);
+  const total = catIndices.reduce((s,ci) => s + CATEGORIES[ci].clues.length, 0);
+  const done = catIndices.reduce((s,ci) => s + state.answered[ci].filter(Boolean).length, 0);
+  document.getElementById('roomCodeText').textContent = room;
+  const modePillEl = document.getElementById('modePill');
+  modePillEl.textContent = state.config.mode === 'solo' ? 'Solo' : 'Duel';
+  modePillEl.classList.toggle('duel', state.config.mode !== 'solo');
+  document.getElementById('playerCountText').textContent = count + ' joueur' + (count > 1 ? 's' : '');
+  document.getElementById('progressText').textContent = done + '/' + total + ' cartes';
+}
+
+function currentCategories(){
+  return state.config.rounds[state.round] || [];
+}
+
+function renderRoundBanner(){
+  const el = document.getElementById('roundBanner');
+  const rounds = state.config.rounds;
+  if(rounds.length <= 1){ el.innerHTML = ''; return; }
+  const catIndices = rounds[state.round];
+  const allDone = catIndices.every(ci => state.answered[ci].every(Boolean));
+  const isLast = state.round === rounds.length - 1;
+  let html = '<span class="round-label">Manche ' + (state.round + 1) + ' / ' + rounds.length + '</span>';
+  if(allDone && !isLast){
+    html += '<button class="btn gold round-next-btn" id="nextRoundBtn" type="button">Manche suivante →</button>';
+  } else if(allDone && isLast){
+    html += '<span class="round-complete">🏁 Partie terminée !</span>';
+  }
+  el.innerHTML = html;
+  const btn = document.getElementById('nextRoundBtn');
+  if(btn) btn.addEventListener('click', advanceRound);
+}
+
+function renderBoard(){
+  const board = document.getElementById('board');
+  const catIdx = currentCategories();
+  const cats = catIdx.map(ci => ({ idx: ci, title: CATEGORIES[ci].title, clues: CATEGORIES[ci].clues }));
+  const sig = state.round + ':' + catIdx.join(',');
+
+  if(boardSig !== sig){
+    boardSig = sig;
+    let html = '';
+    cats.forEach((c, i) => {
+      html += '<div class="cat" style="--accent:' + CATEGORY_ACCENTS[i % CATEGORY_ACCENTS.length] + '; animation-delay:' + (i*0.05) + 's">' + escapeHtml(c.title) + '</div>';
+    });
+    for(let row = 0; row < 5; row++){
+      cats.forEach((c, i) => {
+        const delay = (0.15 + (row*cats.length + i)*0.02);
+        html += '<div class="cell" style="animation-delay:' + delay + 's" data-cat="' + c.idx + '" data-row="' + row + '">' + c.clues[row].value + '</div>';
+      });
+    }
+    const n = Math.max(cats.length,1);
+    const colW = n <= 5 ? 150 : n === 6 ? 136 : n === 7 ? 122 : 108;
+    board.classList.toggle('compact', n >= 7);
+    board.style.gridTemplateColumns = 'repeat(' + n + ', minmax(' + colW + 'px,1fr))';
+    board.style.minWidth = (n * (colW + 12)) + 'px';
+    board.innerHTML = html;
+    board.querySelectorAll('.cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        if(cell.classList.contains('done')) return;
+        selectClue(parseInt(cell.dataset.cat, 10), parseInt(cell.dataset.row, 10));
+      });
+    });
+  }
+
+  board.querySelectorAll('.cell').forEach(cell => {
+    const ci = parseInt(cell.dataset.cat, 10);
+    const row = parseInt(cell.dataset.row, 10);
+    const done = state.answered[ci][row];
+    const active = !!(state.active && state.active.cat === ci && state.active.row === row);
+    if(done && !cell.classList.contains('done')){
+      cell.classList.add('done');
+      cell.textContent = '';
+    } else if(!done && cell.classList.contains('done')){
+      cell.classList.remove('done');
+      cell.textContent = CATEGORIES[ci].clues[row].value;
+    }
+    cell.classList.toggle('active-cell', active);
+  });
+
+  const playerCount = Object.keys(state.scores).length;
+  const locked = state.config.mode === 'duel' && playerCount < 2;
+  const lockEl = document.getElementById('boardLock');
+  lockEl.style.display = locked ? 'flex' : 'none';
+  if(locked) document.getElementById('lockRoomCode').textContent = room;
+
+  renderRoundBanner();
+}
+
+function renderScores(){
+  const el = document.getElementById('scores');
+  const players = Object.entries(state.scores).map(([id, p]) => ({ id, ...p }));
+  if(players.length === 0){
+    el.innerHTML = '<div class="empty-note">Aucun joueur pour l\'instant.</div>';
+    return;
+  }
+  players.sort((a,b) => b.score - a.score);
+  const topScore = players[0].score;
+  el.innerHTML = players.map((p, i) => {
+    const isLeader = p.score > 0 && p.score === topScore;
+    return '<div class="player-row' + (isLeader ? ' leader' : '') + '">' +
+        '<div class="player-name">' +
+          '<span class="player-rank">' + (i+1) + '</span>' +
+          '<span class="player-avatar" style="background:' + p.color + '">' + escapeHtml(avatarGlyph(p)) + '</span>' +
+          '<span>' + escapeHtml(p.name) + (p.id === me.id ? ' <span class="you-tag">(vous)</span>' : '') + (isLeader ? ' 👑' : '') + '</span>' +
+        '</div>' +
+        '<div class="player-score" data-id="' + p.id + '">' + p.score + '</div>' +
+      '</div>';
+  }).join('');
+
+  players.forEach(p => {
+    const prev = prevScores[p.id];
+    if(prev !== undefined && prev !== p.score){
+      const scoreEl = el.querySelector('.player-score[data-id="' + p.id + '"]');
+      if(scoreEl){
+        scoreEl.classList.add('pop');
+        setTimeout(() => scoreEl.classList.remove('pop'), 700);
+      }
+    }
+    prevScores[p.id] = p.score;
+  });
+}
+
+function spawnConfetti(container){
+  for(let i=0;i<20;i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const color = CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)];
+    piece.style.background = color;
+    piece.style.left = Math.random()*100 + '%';
+    piece.style.animationDelay = (Math.random()*0.3) + 's';
+    piece.style.animationDuration = (1 + Math.random()*0.6) + 's';
+    piece.style.transform = 'rotate(' + Math.floor(Math.random()*360) + 'deg)';
+    container.appendChild(piece);
+  }
+}
+
+function renderOverlay(){
+  const layer = document.getElementById('overlayLayer');
+
+  if(!state.active){
+    if(overlaySig !== 'none'){
+      layer.innerHTML = '';
+      overlaySig = 'none';
+      lastCelebratedKey = null;
+    }
+    return;
+  }
+
+  const a = state.active;
+  const sig = [a.cat, a.row, a.buzzed, a.tried.join(','), a.decided, a.correct, a.resultMsg, a.revealed].join('|');
+  if(sig === overlaySig) return;
+  overlaySig = sig;
+
+  const existingInput = document.getElementById('answerInput');
+  const preservedValue = existingInput ? existingInput.value : null;
+  const hadFocus = existingInput === document.activeElement;
+  const caretPos = existingInput ? existingInput.selectionStart : null;
+
+  const clue = getClue(state, a.cat, a.row);
+  const buzzedPlayer = a.buzzed ? state.scores[a.buzzed] : null;
+  const iBuzzed = a.buzzed === me.id;
+  const alreadyTried = a.tried.includes(me.id);
+  const questionKey = a.cat + '-' + a.row;
+
+  let bodyHtml =
+    '<div class="clue-cat">' + escapeHtml(CATEGORIES[a.cat].title) + '</div>' +
+    '<div class="clue-value">' + clue.value + ' points</div>' +
+    '<div class="clue-text">' + escapeHtml(clue.clue) + '</div>';
+
+  if(a.resultMsg){
+    bodyHtml += '<div class="result-msg">' + escapeHtml(a.resultMsg) + '</div>';
+  }
+  if(a.revealed){
+    bodyHtml += '<div class="answer-text">' + escapeHtml(revealAnswer(clue.answer)) + '</div>';
+  }
+
+  if(a.decided){
+    bodyHtml += '<div class="row-actions"><button class="btn gold" id="closeBtn">Question suivante</button></div>';
+  } else if(!a.buzzed){
+    if(alreadyTried){
+      bodyHtml += '<div class="buzzed-info">Vous avez déjà tenté cette question, à un autre de buzzer.</div>';
+    } else {
+      bodyHtml += '<button class="buzz-btn" id="buzzBtn">BUZZ</button>';
+    }
+    bodyHtml += '<div class="row-actions" style="margin-top:18px;"><button class="btn ghost" id="skipBtn">Passer la question</button></div>';
+  } else if(iBuzzed){
+    bodyHtml +=
+      '<div class="buzzed-info">C\'est à vous ! Tapez votre réponse.</div>' +
+      '<div class="answer-form"><input type="text" id="answerInput" placeholder="Votre réponse" autocomplete="off" /><button class="btn cyan" id="submitBtn">Valider</button></div>' +
+      '<div class="row-actions"><button class="btn ghost" id="skipBtn">Passer la question</button></div>';
+  } else {
+    bodyHtml +=
+      '<div class="buzzed-info"><b>' + escapeHtml(buzzedPlayer ? buzzedPlayer.name : '?') + '</b> réfléchit à sa réponse...</div>' +
+      '<div class="row-actions">' +
+        '<button class="btn ghost" id="forceCorrectBtn">Forcer correct</button>' +
+        '<button class="btn ghost" id="forceIncorrectBtn">Forcer incorrect</button>' +
+        '<button class="btn ghost" id="skipBtn">Passer</button>' +
+      '</div>';
+  }
+
+  const showConfetti = a.decided && a.correct && lastCelebratedKey !== questionKey;
+  layer.innerHTML = '<div class="overlay"><div class="modal' + (a.decided && a.correct ? ' correct-glow' : '') + '" id="modalBox">' + bodyHtml + '</div></div>';
+
+  if(showConfetti){
+    lastCelebratedKey = questionKey;
+    spawnConfetti(document.getElementById('modalBox'));
+  }
+
+  const buzzBtn = document.getElementById('buzzBtn');
+  if(buzzBtn) buzzBtn.addEventListener('click', buzz);
+  const submitBtn = document.getElementById('submitBtn');
+  const answerInput = document.getElementById('answerInput');
+  if(submitBtn){
+    submitBtn.addEventListener('click', () => submitAnswer(answerInput.value));
+    answerInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') submitAnswer(answerInput.value); });
+    if(preservedValue !== null){
+      answerInput.value = preservedValue;
+      if(hadFocus){
+        answerInput.focus();
+        const pos = caretPos !== null ? caretPos : preservedValue.length;
+        answerInput.setSelectionRange(pos, pos);
+      }
+    } else {
+      answerInput.focus();
+    }
+  }
+  const forceCorrectBtn = document.getElementById('forceCorrectBtn');
+  if(forceCorrectBtn) forceCorrectBtn.addEventListener('click', () => forceDecision(true));
+  const forceIncorrectBtn = document.getElementById('forceIncorrectBtn');
+  if(forceIncorrectBtn) forceIncorrectBtn.addEventListener('click', () => forceDecision(false));
+  const skipBtn = document.getElementById('skipBtn');
+  if(skipBtn) skipBtn.addEventListener('click', skipQuestion);
+  const closeBtn = document.getElementById('closeBtn');
+  if(closeBtn) closeBtn.addEventListener('click', closeQuestion);
+}
+
+function spawnFloatingEmoji(emoji){
+  const layer = document.getElementById('reactionLayer');
+  if(!layer) return;
+  const el = document.createElement('div');
+  el.className = 'floating-emoji';
+  el.textContent = emoji;
+  el.style.left = (10 + Math.random() * 80) + 'vw';
+  el.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
+  el.style.animationDuration = (2.4 + Math.random() * 1.2) + 's';
+  layer.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+
+function processReactions(s){
+  if(!s || !Array.isArray(s.reactions)) return;
+  s.reactions.forEach(r => {
+    if(!seenReactionIds.has(r.id)){
+      seenReactionIds.add(r.id);
+      spawnFloatingEmoji(r.emoji);
+    }
+  });
+}
+
+async function reactToGame(emoji){
+  spawnFloatingEmoji(emoji);
+  await mutateState(s => {
+    if(!Array.isArray(s.reactions)) s.reactions = [];
+    const reaction = { id: uid(), emoji, ts: Date.now() };
+    s.reactions.push(reaction);
+    const cutoff = Date.now() - 15000;
+    s.reactions = s.reactions.filter(r => r.ts >= cutoff).slice(-30);
+    seenReactionIds.add(reaction.id);
+    return true;
+  });
+}
+
+function renderAll(){
+  renderMeBadge();
+  renderRoomBar();
+  renderBoard();
+  renderScores();
+  renderOverlay();
+  renderChat();
+  document.getElementById('reactionBar').style.display = state ? 'flex' : 'none';
+  processReactions(state);
+}
+
+function formatChatTime(ts){
+  const d = new Date(ts);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return hh + ':' + mm;
+}
+
+function renderChat(){
+  const el = document.getElementById('chatMessages');
+  if(!el) return;
+  if(!state){ el.innerHTML = ''; chatSig = null; return; }
+  const msgs = Array.isArray(state.chat) ? state.chat : [];
+
+  let hasNewFromOther = false;
+  msgs.forEach(m => {
+    if(!seenChatIds.has(m.id)){
+      seenChatIds.add(m.id);
+      if(m.playerId !== me.id) hasNewFromOther = true;
+    }
+  });
+  if(hasNewFromOther) playSound('chat');
+
+  const sig = msgs.map(m => m.id).join(',');
+  if(chatSig === sig) return;
+  chatSig = sig;
+
+  if(msgs.length === 0){
+    el.innerHTML = '<div class="empty-note">Aucun message pour l\'instant. Dites bonjour 👋</div>';
+  } else {
+    el.innerHTML = msgs.map(m => {
+      const isMe = m.playerId === me.id;
+      return '<div class="chat-msg">' +
+        '<span class="player-avatar" style="background:' + m.color + '">' + escapeHtml(m.avatar || (m.name || '?').charAt(0).toUpperCase()) + '</span>' +
+        '<div class="chat-msg-body">' +
+          '<div class="chat-msg-head"><span class="chat-msg-name' + (isMe ? ' me' : '') + '">' + escapeHtml(m.name) + (isMe ? ' (vous)' : '') + '</span><span class="chat-msg-time">' + formatChatTime(m.ts) + '</span></div>' +
+          '<div class="chat-msg-text">' + escapeHtml(m.text) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendChat(text){
+  const trimmed = (text || '').trim();
+  if(!trimmed || !state) return;
+  const input = document.getElementById('chatInput');
+  if(input) input.value = '';
+  playSound('click');
+  await mutateState(s => {
+    if(!Array.isArray(s.chat)) s.chat = [];
+    const msg = { id: uid(), playerId: me.id, name: me.name, color: me.color, avatar: me.avatar, text: trimmed.slice(0, 240), ts: Date.now() };
+    s.chat.push(msg);
+    if(s.chat.length > 60) s.chat = s.chat.slice(-60);
+    seenChatIds.add(msg.id);
+    return true;
+  });
+  if(input) input.focus();
+}
+
+async function selectClue(ci, row){
+  if(!state || state.active) return; // cheap local guard to avoid a pointless round-trip
+  await mutateState(s => {
+    if(s.active) return false;
+    if(s.answered[ci][row]) return false;
+    const playerCount = Object.keys(s.scores).length;
+    if(s.config.mode === 'duel' && playerCount < 2) return false;
+    const solo = s.config.mode === 'solo';
+    s.active = newActive(ci, row, solo ? me.id : null);
+    s.started = true;
+    playSound('select');
+    return true;
+  });
+}
+
+async function buzz(){
+  await mutateState(s => {
+    if(!s.active || s.active.buzzed) return false;
+    if(s.active.tried.includes(me.id)) return false;
+    s.active.buzzed = me.id;
+    playSound('buzz');
+    return true;
+  });
+}
+
+async function submitAnswer(text){
+  await mutateState(s => {
+    if(!s.active || s.active.buzzed !== me.id) return false;
+    const clue = getClue(s, s.active.cat, s.active.row);
+    const correct = checkAnswer(text || '', revealAnswer(clue.answer));
+    applyDecision(s, correct);
+    return true;
+  });
+}
+
+function applyDecision(s, correct){
+  playSound(correct ? 'correct' : 'incorrect');
+  const a = s.active;
+  const clue = getClue(s, a.cat, a.row);
+  const playerName = s.scores[a.buzzed] ? s.scores[a.buzzed].name : 'Le joueur';
+  if(correct){
+    if(s.scores[a.buzzed]) s.scores[a.buzzed].score += clue.value;
+    s.answered[a.cat][a.row] = true;
+    a.decided = true;
+    a.correct = true;
+    a.revealed = true;
+    a.resultMsg = playerName + ' a trouvé la bonne réponse ! +' + clue.value;
+  } else {
+    a.tried.push(a.buzzed);
+    a.buzzed = null;
+    const totalPlayers = Object.keys(s.scores).length;
+    if(s.config.mode === 'solo' || a.tried.length >= totalPlayers){
+      s.answered[a.cat][a.row] = true;
+      a.decided = true;
+      a.correct = false;
+      a.revealed = true;
+      a.resultMsg = "Personne n'a trouvé la bonne réponse.";
+    } else {
+      a.resultMsg = playerName + " s'est trompé, à un autre de tenter sa chance.";
+    }
+  }
+}
+
+async function forceDecision(correct){
+  await mutateState(s => {
+    if(!s.active || !s.active.buzzed) return false;
+    applyDecision(s, correct);
+    return true;
+  });
+}
+
+async function skipQuestion(){
+  await mutateState(s => {
+    if(!s.active) return false;
+    const a = s.active;
+    s.answered[a.cat][a.row] = true;
+    a.decided = true;
+    a.correct = false;
+    a.revealed = true;
+    a.resultMsg = 'Question passée.';
+    playSound('click');
+    return true;
+  });
+}
+
+async function closeQuestion(){
+  await mutateState(s => {
+    s.active = null;
+    playSound('click');
+    return true;
+  });
+}
+
+async function advanceRound(){
+  await mutateState(s => {
+    if(!s.config) return false;
+    if(s.round >= s.config.rounds.length - 1) return false;
+    s.round += 1;
+    s.active = null;
+    return true;
+  });
+}
+
+async function switchToSolo(){
+  await mutateState(s => {
+    if(!s.config || s.config.mode === 'solo') return false;
+    s.config.mode = 'solo';
+    return true;
+  });
+}
+
+async function resetGame(){
+  if(!state) return;
+  if(!confirm('Réinitialiser le plateau et les scores pour tous les joueurs de la salle ?')) return;
+  await mutateState(s => {
+    const config = s.config;
+    const fresh = freshBoardState(config);
+    Object.entries(s.scores).forEach(([id, p]) => {
+      fresh.scores[id] = { name: p.name, color: p.color, avatar: p.avatar, score: 0 };
+    });
+    fresh.chat = s.chat || [];
+    Object.keys(s).forEach(k => delete s[k]);
+    Object.assign(s, fresh);
+    prevScores = {};
+    boardSig = null;
+    return true;
+  });
+}
+
+function pollLoop(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if(Date.now() < suppressPollUntil) return;
+    const fresh = migrateState(await loadState());
+    if(fresh){
+      state = fresh;
+      renderAll();
+    }
+  }, 1200);
+}
+
+function renderSkeleton(){
+  const board = document.getElementById('board');
+  board.style.gridTemplateColumns = 'repeat(4, minmax(140px,1fr))';
+  board.style.minWidth = '620px';
+  let html = '';
+  for(let i=0;i<4;i++) html += '<div class="cat skeleton-block">&nbsp;</div>';
+  for(let r=0;r<5;r++){
+    for(let i=0;i<4;i++) html += '<div class="cell skeleton-block" style="opacity:1;">&nbsp;</div>';
+  }
+  board.innerHTML = html;
+  document.getElementById('scores').innerHTML =
+    '<div class="skel-row skeleton-block"></div>' +
+    '<div class="skel-row skeleton-block"></div>' +
+    '<div class="skel-row skeleton-block"></div>';
+}
+
+function setJoinLoading(loading){
+  const btn = document.getElementById('joinBtn');
+  if(!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<span class="btn-spinner"></span> Connexion…' : 'Rejoindre la salle';
+}
+
+function pickerMarkup(selAvatar, selColor){
+  return '<div class="field-label">Avatar</div>' +
+    '<div class="avatar-chips" id="avatarChips">' +
+      EMOJI_AVATARS.map(e => '<button type="button" class="avatar-chip' + (e === selAvatar ? ' active' : '') + '" data-avatar="' + e + '">' + e + '</button>').join('') +
+    '</div>' +
+    '<div class="field-label">Couleur</div>' +
+    '<div class="color-chips" id="colorChips">' +
+      PALETTE.map(c => '<button type="button" class="color-chip' + (c === selColor ? ' active' : '') + '" data-color="' + c + '" style="background:' + c + '"></button>').join('') +
+    '</div>';
+}
+
+function bindPickers(profile){
+  document.querySelectorAll('.avatar-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      profile.avatar = btn.dataset.avatar;
+      document.querySelectorAll('.avatar-chip').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+  document.querySelectorAll('.color-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      profile.color = btn.dataset.color;
+      document.querySelectorAll('.color-chip').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+}
+
+function showProfileEditor(){
+  if(!me || (state && state.active)) return;
+  const layer = document.getElementById('overlayLayer');
+  const profile = { avatar: me.avatar || EMOJI_AVATARS[0], color: me.color };
+  // Your name is locked as soon as you're in a room: other players (and the
+  // scoreboard) already know you by it, so changing it mid-game would be
+  // confusing. Avatar and color stay editable since those don't affect fairness.
+  const locked = !!state;
+
+  layer.innerHTML =
+    '<div class="overlay"><div class="modal wide" style="animation: modalPop .35s cubic-bezier(.2,.8,.3,1.2);">' +
+      '<h2>Mon profil</h2>' +
+      '<div class="field-label">Votre pseudo</div>' +
+      '<input type="text" class="name-input" id="editNameInput" maxlength="20" minlength="3" value="' + escapeHtml(me.name) + '"' + (locked ? ' disabled' : '') + ' />' +
+      (locked ? '<div class="form-note">Vous êtes dans une salle : votre pseudo ne peut plus être modifié. Quittez la salle pour en choisir un autre.</div>' : '') +
+      pickerMarkup(profile.avatar, profile.color) +
+      '<div class="form-error" id="editFormError"></div>' +
+      '<div class="row-actions">' +
+        '<button class="btn ghost" id="editCancelBtn" type="button">Annuler</button>' +
+        '<button class="btn gold" id="editSaveBtn" type="button">Enregistrer</button>' +
+      '</div>' +
+    '</div></div>';
+
+  bindPickers(profile);
+  const nameInput = document.getElementById('editNameInput');
+  document.getElementById('editCancelBtn').addEventListener('click', () => { layer.innerHTML = ''; });
+  document.getElementById('editSaveBtn').addEventListener('click', async () => {
+    const name = locked ? me.name : nameInput.value.trim();
+    if(!name){
+      document.getElementById('editFormError').textContent = 'Entrez un pseudo.';
+      return;
+    }
+    if(!locked && name.length < 3){
+      document.getElementById('editFormError').textContent = 'Le pseudo doit contenir au moins 3 caractères.';
+      return;
+    }
+    me = { ...me, name, avatar: profile.avatar, color: profile.color };
+    await saveMe(me);
+    if(state){
+      await mutateState(s => {
+        if(!s.scores[me.id]) return false;
+        s.scores[me.id].name = me.name;
+        s.scores[me.id].color = me.color;
+        s.scores[me.id].avatar = me.avatar;
+        return true;
+      });
+    }
+    layer.innerHTML = '';
+    renderAll();
+  });
+}
+
+function showJoinPrompt(){
+  renderSkeleton();
+  const layer = document.getElementById('overlayLayer');
+  const defaultRoom = randomRoomCode(4);
+  const defaultName = me ? me.name : '';
+  const hasLastRoom = me && me.lastRoom;
+
+  let selectedMode = 'duel';
+  let selectedRounds = 1;
+  let selectedCategoryIndices = CATEGORIES.map((_, i) => i).slice(0, DEFAULT_CATEGORIES);
+  const profile = {
+    avatar: me && me.avatar ? me.avatar : EMOJI_AVATARS[Math.floor(Math.random()*EMOJI_AVATARS.length)],
+    color: me && me.color ? me.color : PALETTE[Math.floor(Math.random()*PALETTE.length)]
+  };
+
+  layer.innerHTML =
+    '<div class="overlay"><div class="modal wide" style="animation: modalPop .35s cubic-bezier(.2,.8,.3,1.2);">' +
+      '<div class="join-head">' +
+        '<div class="modal-kicker">Jeopardy+</div>' +
+        '<h2>Nouvelle partie</h2>' +
+        '<p>Entrez le même code que vos amis pour jouer ensemble, ou gardez celui généré pour créer une salle.<br>Si la salle existe déjà, ses réglages priment sur les vôtres.</p>' +
+      '</div>' +
+      '<div class="field-label">Code de salle</div>' +
+      '<div class="room-row"><div class="room-code-boxes" id="roomBoxes" title="Survolez pour révéler">' +
+        [0,1,2,3].map(i => '<input type="text" maxlength="1" class="room-box" data-idx="' + i + '" value="' + escapeHtml((defaultRoom[i] || '').toUpperCase()) + '" />').join('') +
+      '</div><button class="dice-btn" id="copyRoomBtn" type="button" title="Copier le code">' + ICON_COPY + '</button><button class="dice-btn" id="diceBtn" type="button" title="Générer un nouveau code">' + ICON_REFRESH + '</button></div>' +
+      '<div class="copy-feedback" id="roomCopyFeedback">Copié dans le presse-papiers !</div>' +
+      (hasLastRoom ? '<div class="rejoin-hint" id="rejoinHint">Reprendre votre dernière salle : <b>' + escapeHtml(me.lastRoom) + '</b></div>' : '') +
+      '<div class="field-label">Votre pseudo</div>' +
+      '<input type="text" class="name-input" id="nameInput" placeholder="Votre pseudo" maxlength="20" minlength="3" value="' + escapeHtml(defaultName) + '" />' +
+      pickerMarkup(profile.avatar, profile.color) +
+      '<div class="field-label">Mode de jeu</div>' +
+      '<div class="mode-options" id="modeOptions">' +
+        '<button type="button" class="mode-opt active" data-mode="duel"><b>Duel</b><span>Avec buzzer, 2 joueurs ou plus</span></button>' +
+        '<button type="button" class="mode-opt" data-mode="solo"><b>Solo</b><span>Sans buzzer, seul ou en coopératif</span></button>' +
+      '</div>' +
+      '<div class="field-label">Nombre de manches</div>' +
+      '<div class="round-options" id="roundOptions">' +
+        '<button type="button" class="round-opt active" data-rounds="1">1 manche</button>' +
+        '<button type="button" class="round-opt" data-rounds="2">2 manches</button>' +
+        '<button type="button" class="round-opt" data-rounds="3">3 manches</button>' +
+      '</div>' +
+      '<div class="field-label">Catégories <span class="cat-count" id="catCount"></span><button type="button" class="random-cats-btn" id="randomCatsBtn">🎲 Aléatoire</button></div>' +
+      '<div class="cat-chips" id="catChips">' +
+        CATEGORIES.map((c, i) => '<button type="button" class="cat-chip' + (i < DEFAULT_CATEGORIES ? ' active' : '') + '" data-idx="' + i + '">' + escapeHtml(c.title) + '</button>').join('') +
+      '</div>' +
+      '<div class="form-error" id="formError"></div>' +
+      '<button class="btn gold" id="joinBtn" style="width:100%;">Rejoindre la salle</button>' +
+    '</div></div>';
+
+  const nameInput = document.getElementById('nameInput');
+
+  function getRoomBoxes(){ return Array.from(document.querySelectorAll('.room-box')); }
+  function setRoomCode(code){
+    const chars = (code || '').toUpperCase().split('');
+    getRoomBoxes().forEach((b, i) => { b.value = chars[i] || ''; });
+  }
+  function getRoomCode(){
+    return getRoomBoxes().map(b => b.value.trim().toUpperCase()).join('');
+  }
+
+  let roomCopyTimer = null;
+  const doCopyRoomCode = async () => {
+    const ok = await copyToClipboard(getRoomCode());
+    playSound('copy');
+    const fb = document.getElementById('roomCopyFeedback');
+    fb.textContent = ok ? 'Copié dans le presse-papiers !' : 'Échec de la copie';
+    fb.classList.add('show');
+    const btn = document.getElementById('copyRoomBtn');
+    if(ok && btn){
+      btn.innerHTML = ICON_CHECK;
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = ICON_COPY; btn.classList.remove('copied'); }, 1300);
+    }
+    if(roomCopyTimer) clearTimeout(roomCopyTimer);
+    roomCopyTimer = setTimeout(() => fb.classList.remove('show'), 1400);
+  };
+
+  getRoomBoxes().forEach((box, i, boxes) => {
+    box.addEventListener('input', () => {
+      box.value = box.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(-1);
+      if(box.value && i < boxes.length - 1){ boxes[i+1].focus(); boxes[i+1].select(); }
+    });
+    box.addEventListener('keydown', (e) => {
+      if(e.key === 'Backspace' && !box.value && i > 0){ boxes[i-1].focus(); boxes[i-1].select(); }
+      else if(e.key === 'ArrowLeft' && i > 0){ boxes[i-1].focus(); }
+      else if(e.key === 'ArrowRight' && i < boxes.length - 1){ boxes[i+1].focus(); }
+      else if(e.key === 'Enter') doJoin();
+    });
+  });
+
+  document.getElementById('copyRoomBtn').addEventListener('click', doCopyRoomCode);
+  document.getElementById('diceBtn').addEventListener('click', () => {
+    setRoomCode(randomRoomCode(4));
+    playSound('click');
+  });
+  if(hasLastRoom){
+    document.getElementById('rejoinHint').addEventListener('click', () => {
+      setRoomCode(me.lastRoom);
+    });
+  }
+  bindPickers(profile);
+
+  document.querySelectorAll('.mode-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedMode = btn.dataset.mode;
+      document.querySelectorAll('.mode-opt').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+  document.querySelectorAll('.round-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedRounds = parseInt(btn.dataset.rounds, 10);
+      document.querySelectorAll('.round-opt').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+  function updateCatCount(){
+    const n = selectedCategoryIndices.length;
+    document.getElementById('catCount').textContent = '(' + n + '/' + MAX_CATEGORIES + ' sélectionnée' + (n > 1 ? 's' : '') + ')';
+  }
+  updateCatCount();
+  document.querySelectorAll('.cat-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      const pos = selectedCategoryIndices.indexOf(idx);
+      if(pos >= 0){
+        if(selectedCategoryIndices.length <= 1) return;
+        selectedCategoryIndices.splice(pos, 1);
+        btn.classList.remove('active');
+      } else {
+        if(selectedCategoryIndices.length >= MAX_CATEGORIES) return;
+        selectedCategoryIndices.push(idx);
+        btn.classList.add('active');
+      }
+      updateCatCount();
+    });
+  });
+  document.getElementById('randomCatsBtn').addEventListener('click', () => {
+    const pool = CATEGORIES.map((_, i) => i);
+    for(let i = pool.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    selectedCategoryIndices = pool.slice(0, Math.min(5, CATEGORIES.length));
+    document.querySelectorAll('.cat-chip').forEach(btn => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      btn.classList.toggle('active', selectedCategoryIndices.includes(idx));
+    });
+    updateCatCount();
+    playSound('click');
+  });
+
+  const doJoin = async () => {
+    const name = nameInput.value.trim();
+    const roomCode = getRoomCode();
+    const errEl = document.getElementById('formError');
+    if(!name || !roomCode){
+      errEl.textContent = 'Entrez un pseudo et un code de salle.';
+      return;
+    }
+    if(name.length < 3){
+      errEl.textContent = 'Le pseudo doit contenir au moins 3 caractères.';
+      return;
+    }
+    if(selectedCategoryIndices.length < 2){
+      errEl.textContent = 'Choisissez au moins 2 catégories.';
+      return;
+    }
+    if(selectedCategoryIndices.length < selectedRounds){
+      errEl.textContent = 'Choisissez au moins ' + selectedRounds + ' catégories pour ' + selectedRounds + ' manches.';
+      return;
+    }
+    errEl.textContent = '';
+    playSound('join');
+    setJoinLoading(true);
+    const id = me && me.id ? me.id : uid();
+    me = { id, name, color: profile.color, avatar: profile.avatar, lastRoom: roomCode };
+    await saveMe(me);
+    room = roomCode;
+    await init({ mode: selectedMode, roundsCount: selectedRounds, categoryIndices: selectedCategoryIndices.slice() });
+  };
+  document.getElementById('joinBtn').addEventListener('click', doJoin);
+  nameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') doJoin(); });
+}
+
+async function init(rawConfig){
+  document.getElementById('overlayLayer').innerHTML = '';
+  resetRenderCaches();
+  if(!me){
+    me = await loadMe();
+  }
+  if(!me || !room){
+    showJoinPrompt();
+    return;
+  }
+  state = await ensureJoined(rawConfig || { mode: 'duel', roundsCount: 1, categoryIndices: CATEGORIES.map((_,i)=>i).slice(0, DEFAULT_CATEGORIES) });
+  Object.entries(state.scores).forEach(([id, p]) => { prevScores[id] = p.score; });
+  (state.reactions || []).forEach(r => seenReactionIds.add(r.id));
+  (state.chat || []).forEach(m => seenChatIds.add(m.id));
+  renderAll();
+  pollLoop();
+}
+
+document.getElementById('resetBtn').addEventListener('click', resetGame);
+document.getElementById('soloSwitchBtn').addEventListener('click', switchToSolo);
+document.querySelectorAll('.reaction-btn').forEach(btn => {
+  btn.addEventListener('click', () => reactToGame(btn.dataset.emoji));
+});
+document.getElementById('chatSendBtn').addEventListener('click', () => {
+  sendChat(document.getElementById('chatInput').value);
+});
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){ e.preventDefault(); sendChat(document.getElementById('chatInput').value); }
+});
+
+renderSkeleton();
+init();
+</script>
+</body>
+</html>
