@@ -152,6 +152,7 @@
     display:inline-flex; align-items:center; gap:6px;
     background:transparent; border:1px solid var(--line); color:var(--muted);
     border-radius:7px; padding:6px 12px 6px 9px; font-size:12px; cursor:pointer;
+    font-family:'Inter', sans-serif;
     transition: all .15s;
   }
   .copy-btn svg{ flex-shrink:0; width:14px; height:14px; }
@@ -185,8 +186,33 @@
   .round-complete{
     font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:13px;
     color: var(--gold);
+    display:inline-flex; align-items:center; gap:7px;
   }
   .round-next-btn{ padding:7px 16px; font-size:13px; }
+  .mini-spinner{
+    display:inline-block; width:11px; height:11px; flex-shrink:0;
+    border:2px solid rgba(242,183,5,0.25); border-top-color: var(--gold);
+    border-radius:50%; animation: spin .7s linear infinite;
+  }
+
+  .winner-modal{ max-width:480px; position:relative; overflow:hidden; }
+  .winner-confetti{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+  .winner-trophy{ font-size:52px; margin-bottom:6px; animation: popIn .5s cubic-bezier(.2,.8,.3,1.3) both; }
+  .podium{ display:flex; flex-direction:column; gap:8px; margin: 18px 0 6px; text-align:left; }
+  .podium-row{
+    display:flex; align-items:center; gap:10px;
+    background: var(--panel-2); border:1px solid var(--line); border-radius:12px;
+    padding:10px 14px;
+  }
+  .podium-row.top{ border-color: var(--gold); background: linear-gradient(90deg, rgba(242,183,5,0.12), transparent 80%); }
+  .podium-medal{ font-size:20px; width:26px; text-align:center; flex-shrink:0; }
+  .podium-name{ flex:1; font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:14.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .podium-score{ font-family:'IBM Plex Mono', monospace; font-weight:600; color: var(--gold); flex-shrink:0; }
+  .podium-rest{ text-align:left; margin: 4px 2px 4px; }
+  .podium-rest-row{
+    display:flex; justify-content:space-between; font-size:12.5px; color: var(--muted);
+    padding:4px 6px; font-family:'IBM Plex Mono', monospace;
+  }
 
   .layout{ display:grid; grid-template-columns: 1fr 260px; gap: 22px; align-items:start; }
   @media (max-width: 860px){ .layout{ grid-template-columns: 1fr; } }
@@ -314,6 +340,7 @@
     background:transparent; color: var(--muted);
     border:1px solid var(--line); border-radius:8px;
     padding:9px; font-size:12px; cursor:pointer;
+    font-family:'Inter', sans-serif;
     transition: all .15s;
   }
   .reset-btn:hover{ color: var(--text); border-color: var(--gold); transform: translateY(-1px); }
@@ -479,6 +506,23 @@
   .room-box:focus{ outline:none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,183,5,0.15); }
   .copy-feedback{ font-size:11px; color: var(--cyan); text-align:left; min-height:14px; margin:0 0 10px; opacity:0; transition:opacity .2s; }
   .copy-feedback.show{ opacity:1; }
+  .room-status{
+    font-size:12px; text-align:left; margin: 0 0 12px; min-height:0;
+    display:flex; align-items:center; gap:7px; line-height:1.4;
+    max-height:0; opacity:0; overflow:hidden; transition: all .2s ease;
+  }
+  .room-status.show{ max-height:60px; opacity:1; margin-bottom:14px; }
+  .room-status.found{ color: var(--cyan); }
+  .room-status.free{ color: var(--muted); }
+  .room-status-spinner{
+    display:inline-block; width:11px; height:11px; flex-shrink:0;
+    border:2px solid rgba(255,255,255,0.15); border-top-color: var(--cyan);
+    border-radius:50%; animation: spin .6s linear infinite;
+  }
+  .mode-opt:disabled, .round-opt:disabled, .cat-chip:disabled, .random-cats-btn:disabled{
+    opacity:.5; cursor:not-allowed; pointer-events:none;
+  }
+  .mode-opt.locked, .round-opt.locked{ filter: grayscale(0.4); }
   .dice-btn{
     background: var(--panel-2); border:1px solid var(--line); border-radius:8px;
     color: var(--text); width:46px; height:46px; cursor:pointer; font-size:17px;
@@ -537,8 +581,10 @@
   .cat-chip{
     background: var(--panel-2); border:1px solid var(--line); color: var(--muted);
     border-radius:999px; padding:7px 13px; font-size:12px; cursor:pointer;
+    font-family:'Inter', sans-serif; font-weight:500;
     transition: all .15s;
   }
+  .cat-chip:disabled{ opacity:.45; cursor:not-allowed; }
   .cat-chip.active{ background: rgba(51,230,204,0.14); border-color: var(--cyan); color: var(--cyan); }
   .cat-chip:hover{ border-color: var(--cyan); }
   .cat-count{ color: var(--muted); font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; }
@@ -546,6 +592,7 @@
     margin-left:auto; background:transparent; border:1px solid var(--line); color:var(--muted);
     border-radius:999px; padding:4px 11px; font-size:11px; cursor:pointer;
     text-transform:none; letter-spacing:0; font-weight:500;
+    font-family:'Inter', sans-serif;
     transition: all .15s;
   }
   .random-cats-btn:hover{ color: var(--text); border-color: var(--gold); transform: translateY(-1px); }
@@ -628,6 +675,7 @@
 </div>
 
 <div id="overlayLayer"></div>
+<div id="winnerLayer"></div>
 <div id="reactionLayer" class="reaction-layer"></div>
 <div class="reaction-bar" id="reactionBar" style="display:none;">
   <button type="button" class="reaction-btn" data-emoji="👍">👍</button>
@@ -726,30 +774,40 @@ const CATEGORIES = [
       { clue: "Ce pays d'Océanie est aussi le nom d'un continent à lui seul.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0F1c3RyYWxpZSA/" },
       { clue: "Ce pays d'Amérique du Sud, le plus vaste, a pour capitale Brasília.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCcsOpc2lsID8=" },
       { clue: "Cette montagne est le plus haut sommet du monde, culminant à plus de 8 800 mètres dans l'Himalaya.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0V2ZXJlc3QgPw==" },
+      { clue: "Ce pays d'Europe de l'Est compte le plus grand nombre d'habitants du continent.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBSdXNzaWUgPw==" },
+      { clue: "Cette chute d'eau, la plus haute du monde, se situe au Venezuela.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTYWx0byBBbmdlbCA/" },
     ] },
     { value: 200, pool: [
       { clue: "Cette chaîne de montagnes sépare traditionnellement l'Europe de l'Asie.", answer: "UXUnZXN0LWNlIHF1ZSBsJ091cmFsID8=" },
       { clue: "Cet océan est le plus grand du monde, bordant l'Asie et les Amériques.", answer: "UXUnZXN0LWNlIHF1ZSBsJ29jw6lhbiBQYWNpZmlxdWUgPw==" },
       { clue: "Cette mer, la plus salée du monde, se trouve entre la Jordanie et Israël.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtZXIgTW9ydGUgPw==" },
       { clue: "Ce fleuve traverse Paris avant de se jeter dans la Manche.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBTZWluZSA/" },
+      { clue: "Ce fleuve, le plus long d'Asie, traverse la Chine sur plus de 6300 km.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBZYW5ndHPDqSA/" },
+      { clue: "Cette capitale portugaise est bâtie sur sept collines au bord du Tage.", answer: "UXUnZXN0LWNlIHF1ZSBMaXNib25uZSA/" },
     ] },
     { value: 300, pool: [
       { clue: "Ce pays est à la fois le plus petit État du monde et le siège de l'Église catholique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBWYXRpY2FuID8=" },
       { clue: "Ce désert, le plus grand désert chaud du monde, couvre une large part de l'Afrique du Nord.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTYWhhcmEgPw==" },
       { clue: "Cette île, la plus grande du monde, appartient au royaume du Danemark.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBHcm9lbmxhbmQgPw==" },
       { clue: "Ce lac africain est le plus grand lac du continent par sa superficie.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsYWMgVmljdG9yaWEgPw==" },
+      { clue: "Ce canal navigable relie l'océan Atlantique à l'océan Pacifique en traversant l'Amérique centrale.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYW5hbCBkZSBQYW5hbWEgPw==" },
+      { clue: "Ce pays d'Asie du Sud-Est, composé de plus de 7000 îles, a pour capitale Manille.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgUGhpbGlwcGluZXMgPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Ce détroit sépare l'Espagne du Maroc et relie l'Atlantique à la Méditerranée.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6l0cm9pdCBkZSBHaWJyYWx0YXIgPw==" },
       { clue: "Ce pays d'Asie centrale, ancien pays le plus vaste sans accès à la mer, a pour capitale Astana.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBLYXpha2hzdGFuID8=" },
       { clue: "Ce détroit sépare l'Asie de l'Amérique du Nord, entre la Russie et l'Alaska.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6l0cm9pdCBkZSBCw6lyaW5nID8=" },
       { clue: "Cette chaîne de montagnes, la plus longue du monde, longe la côte ouest de l'Amérique du Sud.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjb3JkaWxsw6hyZSBkZXMgQW5kZXMgPw==" },
+      { clue: "Ce fleuve européen traverse dix pays, plus que tout autre fleuve au monde.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBEYW51YmUgPw==" },
+      { clue: "Cette dépression désertique, l'un des points les plus bas d'Afrique, se situe en Éthiopie sous le niveau de la mer.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6lzZXJ0IGR1IERhbmFraWwgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Cette capitale d'Amérique du Sud est la plus haute au monde, à plus de 3600 mètres d'altitude.", answer: "UXUnZXN0LWNlIHF1ZSBMYSBQYXogPw==" },
       { clue: "Ce pays, le seul à occuper un continent entier, partage sa frontière terrestre avec un unique voisin.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FmcmlxdWUgZHUgU3VkID8=" },
       { clue: "Cette ville est bâtie à cheval sur deux continents, séparés par le détroit du Bosphore.", answer: "UXUnZXN0LWNlIHF1J0lzdGFuYnVsID8=" },
       { clue: "Ce territoire polaire n'appartient à aucun pays et est régi par un traité international signé en 1959.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FudGFyY3RpcXVlID8=" },
+      { clue: "Cette ligne imaginaire, à 0 degré de longitude, passe par l'observatoire de Greenwich.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtw6lyaWRpZW4gZGUgR3JlZW53aWNoID8=" },
+      { clue: "Ce point du globe, où convergent tous les méridiens, marque le sommet de la planète.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBww7RsZSBOb3JkID8=" },
     ] },
   ]},
   { title: "Histoire de France", clues: [
@@ -758,30 +816,40 @@ const CATEGORIES = [
       { clue: "Ce général corse s'est couronné empereur des Français en 1804.", answer: "UXVpIGVzdCBOYXBvbMOpb24gQm9uYXBhcnRlID8=" },
       { clue: "Cette reine, épouse de Louis XVI, fut guillotinée en 1793 pendant la Révolution.", answer: "UXVpIGVzdCBNYXJpZS1BbnRvaW5ldHRlID8=" },
       { clue: "Ce roi, dit le Bien-Aimé, régna de 1715 à 1774, entre Louis XIV et Louis XVI.", answer: "UXVpIGVzdCBMb3VpcyBYViA/" },
+      { clue: "Ce roi, premier de la dynastie capétienne, fut sacré en 987.", answer: "UXVpIGVzdCBIdWd1ZXMgQ2FwZXQgPw==" },
+      { clue: "Cette fête nationale française commémore la prise de la Bastille.", answer: "UXUnZXN0LWNlIHF1ZSBsZSAxNCBqdWlsbGV0ID8=" },
     ] },
     { value: 200, pool: [
       { clue: "Cette forteresse parisienne fut prise le 14 juillet 1789.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBCYXN0aWxsZSA/" },
       { clue: "Ce traité de 1648 met fin à la guerre de Trente Ans.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0cmFpdMOpIGRlIFdlc3RwaGFsaWUgPw==" },
       { clue: "Ce palais, ancienne résidence royale près de Paris, fut voulu par Louis XIV.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaMOidGVhdSBkZSBWZXJzYWlsbGVzID8=" },
       { clue: "Cette bataille de 1815 marque la défaite définitive de Napoléon face aux armées coalisées.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYXRhaWxsZSBkZSBXYXRlcmxvbyA/" },
+      { clue: "Ce roi de France, dit le Bon Roi Henri, mit fin aux guerres de Religion avec l'édit de Nantes.", answer: "UXVpIGVzdCBIZW5yaSBJViA/" },
+      { clue: "Cette bataille de 1214 assit durablement l'autorité du roi Philippe Auguste.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYXRhaWxsZSBkZSBCb3V2aW5lcyA/" },
     ] },
     { value: 300, pool: [
       { clue: "Cette jeune femme fut brûlée vive à Rouen en 1431 après avoir mené l'armée française.", answer: "UXVpIGVzdCBKZWFubmUgZCdBcmMgPw==" },
       { clue: "Ce ministre de Louis XIV a réformé les finances et développé l'industrie et la marine françaises.", answer: "UXVpIGVzdCBDb2xiZXJ0ID8=" },
       { clue: "Ce cardinal, principal ministre de Louis XIII, a renforcé le pouvoir royal au XVIIe siècle.", answer: "UXVpIGVzdCBSaWNoZWxpZXUgPw==" },
       { clue: "Cette période de répression révolutionnaire, en 1793-1794, est associée à Robespierre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBUZXJyZXVyID8=" },
+      { clue: "Ce peintre officiel de Napoléon a immortalisé son sacre en 1804 dans un tableau monumental.", answer: "UXVpIGVzdCBKYWNxdWVzLUxvdWlzIERhdmlkID8=" },
+      { clue: "Cette guerre de 1870-71 opposa la France à la Prusse et se solda par la perte de l'Alsace-Lorraine.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBndWVycmUgZnJhbmNvLXBydXNzaWVubmUgPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Ce jour de novembre 1918 marque la fin des combats de la Première Guerre mondiale.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FybWlzdGljZSA/" },
       { clue: "Cette bataille de 1916, l'une des plus meurtrières de l'histoire, s'est déroulée dans la Meuse.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYXRhaWxsZSBkZSBWZXJkdW4gPw==" },
       { clue: "Ce mouvement de résistants a combattu l'occupation allemande en France entre 1940 et 1944.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBSw6lzaXN0YW5jZSA/" },
       { clue: "Cette femme politique française, ministre de la Santé, a fait légaliser l'avortement en France en 1975.", answer: "UXVpIGVzdCBTaW1vbmUgVmVpbCA/" },
+      { clue: "Ce roi de France fut guillotiné en janvier 1793 pendant la Révolution.", answer: "UXVpIGVzdCBMb3VpcyBYVkkgPw==" },
+      { clue: "Ce débarquement allié du 6 juin 1944 marqua le début de la libération de la France.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6liYXJxdWVtZW50IGRlIE5vcm1hbmRpZSA/" },
     ] },
     { value: 500, pool: [
       { clue: "Ce général devenu président fonda la Ve République en 1958.", answer: "UXVpIGVzdCBDaGFybGVzIGRlIEdhdWxsZSA/" },
       { clue: "Ce document de 1789 proclame la liberté et l'égalité des citoyens.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBEw6ljbGFyYXRpb24gZGVzIGRyb2l0cyBkZSBsJ2hvbW1lIGV0IGR1IGNpdG95ZW4gPw==" },
       { clue: "Cette guerre, commencée en 1337, opposa la France et l'Angleterre pendant plus d'un siècle.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBndWVycmUgZGUgQ2VudCBBbnMgPw==" },
       { clue: "Ce philosophe des Lumières, exilé en Angleterre, a écrit « Candide » et critiqué l'Église et la monarchie absolue.", answer: "UXVpIGVzdCBWb2x0YWlyZSA/" },
+      { clue: "Ce ministre des Finances de Louis XVI tenta en vain des réformes fiscales avant la Révolution.", answer: "UXVpIGVzdCBUdXJnb3QgPw==" },
+      { clue: "Ce traité de 843 partagea l'empire de Charlemagne entre ses trois petits-fils.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0cmFpdMOpIGRlIFZlcmR1biA/" },
     ] },
   ]},
   { title: "Sciences & Nature", clues: [
@@ -790,30 +858,40 @@ const CATEGORIES = [
       { clue: "Cet état de la matière n'a ni forme propre ni volume propre.", answer: "UXUnZXN0LWNlIHF1J3VuIGdheiA/" },
       { clue: "Cet organe permet de respirer en captant l'oxygène de l'air.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwb3Vtb24gPw==" },
       { clue: "Cette planète est la plus proche du Soleil et aussi la plus petite du système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBNZXJjdXJlID8=" },
+      { clue: "Cet organe, le plus grand du corps humain, protège l'organisme et régule sa température.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwZWF1ID8=" },
+      { clue: "Ce liquide, essentiel à la vie, couvre plus de 70% de la surface terrestre.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VhdSA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce gaz représente environ 78% de l'atmosphère terrestre.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2F6b3RlID8=" },
       { clue: "Cette force attire les objets vers le centre de la Terre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBncmF2aXTDqSA/" },
       { clue: "Ce processus permet aux plantes de produire de l'énergie à partir de la lumière du soleil.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwaG90b3N5bnRow6hzZSA/" },
       { clue: "Cet état de la matière conserve un volume propre mais épouse la forme de son contenant.", answer: "UXUnZXN0LWNlIHF1J3VuIGxpcXVpZGUgPw==" },
+      { clue: "Cette planète est entourée d'anneaux visibles même avec un petit télescope amateur.", answer: "UXUnZXN0LWNlIHF1ZSBTYXR1cm5lID8=" },
+      { clue: "Cet organe assure la filtration du sang et l'élimination des déchets sous forme d'urine.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByZWluID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Cette planète est surnommée la planète rouge.", answer: "UXUnZXN0LWNlIHF1ZSBNYXJzID8=" },
       { clue: "Cette cellule reproductrice mâle féconde l'ovule chez les animaux.", answer: "UXUnZXN0LWNlIHF1J3VuIHNwZXJtYXRvem/Dr2RlID8=" },
       { clue: "Ce savant italien, souvent considéré comme le père de la science moderne, fut jugé par l'Église pour avoir défendu l'héliocentrisme.", answer: "UXVpIGVzdCBHYWxpbMOpZSA/" },
       { clue: "Cette unité de mesure de la température place le point de congélation de l'eau à 0 degré.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBDZWxzaXVzID8=" },
+      { clue: "Cette réaction chimique libère de l'énergie sous forme de chaleur et de lumière en consommant de l'oxygène.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjb21idXN0aW9uID8=" },
+      { clue: "Ce chimiste russe a conçu le tableau périodique des éléments en 1869.", answer: "UXVpIGVzdCBEbWl0cmkgTWVuZGVsZcOvZXYgPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Ce physicien a formulé la théorie de la relativité générale en 1915.", answer: "UXVpIGVzdCBBbGJlcnQgRWluc3RlaW4gPw==" },
       { clue: "Cette molécule en double hélice porte l'information génétique des êtres vivants.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FETiA/" },
       { clue: "Ce naturaliste britannique a formulé la théorie de l'évolution par la sélection naturelle.", answer: "UXVpIGVzdCBDaGFybGVzIERhcndpbiA/" },
       { clue: "Cette particule subatomique, chargée négativement, gravite autour du noyau de l'atome.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpbGVjdHJvbiA/" },
+      { clue: "Cette unité de mesure évalue l'acidité ou la basicité d'une solution sur une échelle de 0 à 14.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwSCA/" },
+      { clue: "Ce scientifique français a développé la théorie microbienne des maladies et créé le vaccin contre la rage.", answer: "UXVpIGVzdCBMb3VpcyBQYXN0ZXVyID8=" },
     ] },
     { value: 500, pool: [
       { clue: "Cet insecte peut soulever jusqu'à environ 50 fois son propre poids.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb3VybWkgPw==" },
       { clue: "Ce phénomène quantique décrit deux particules dont l'état reste lié quelle que soit la distance.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2ludHJpY2F0aW9uIHF1YW50aXF1ZSA/" },
       { clue: "Ce physicien anglais du XVIIe siècle a formulé la loi de la gravitation universelle.", answer: "UXVpIGVzdCBJc2FhYyBOZXd0b24gPw==" },
       { clue: "Cette théorie explique l'origine de l'univers à partir d'une expansion extrêmement rapide depuis un état dense et chaud.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCaWcgQmFuZyA/" },
+      { clue: "Ce principe de la mécanique quantique énonce qu'on ne peut connaître simultanément avec précision la position et la vitesse d'une particule.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwcmluY2lwZSBkJ2luY2VydGl0dWRlIGQnSGVpc2VuYmVyZyA/" },
+      { clue: "Cette expérience de pensée met en scène un chat à la fois mort et vivant tant que la boîte n'est pas ouverte.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGF0IGRlIFNjaHLDtmRpbmdlciA/" },
     ] },
   ]},
   { title: "Cinéma & Séries", clues: [
@@ -822,30 +900,40 @@ const CATEGORIES = [
       { clue: "Ce studio américain a produit le premier long-métrage d'animation entièrement en images de synthèse, Toy Story.", answer: "UXUnZXN0LWNlIHF1ZSBQaXhhciA/" },
       { clue: "Ce réalisateur américain a créé la saga Star Wars en 1977.", answer: "UXVpIGVzdCBHZW9yZ2UgTHVjYXMgPw==" },
       { clue: "Cette actrice française a incarné Amélie Poulain dans le film éponyme de 2001.", answer: "UXVpIGVzdCBBdWRyZXkgVGF1dG91ID8=" },
+      { clue: "Ce film d'animation Disney de 1994 raconte l'histoire d'un jeune lion nommé Simba.", answer: "UXUnZXN0LWNlIHF1ZSBMZSBSb2kgTGlvbiA/" },
+      { clue: "Cette actrice française a incarné Mathilda dans « Léon » de Luc Besson.", answer: "UXVpIGVzdCBOYXRhbGllIFBvcnRtYW4gPw==" },
     ] },
     { value: 200, pool: [
       { clue: "Cette saga de science-fiction commence par « Il y a bien longtemps, dans une galaxie lointaine ».", answer: "UXUnZXN0LWNlIHF1ZSBTdGFyIFdhcnMgPw==" },
       { clue: "Ce réalisateur britannique a mis en scène Psychose et Les Oiseaux.", answer: "UXVpIGVzdCBBbGZyZWQgSGl0Y2hjb2NrID8=" },
       { clue: "Cette série britannique met en scène un détective consultant vivant au 221B Baker Street.", answer: "UXUnZXN0LWNlIHF1ZSBTaGVybG9jayA/" },
       { clue: "Ce réalisateur américain est connu pour ses films non linéaires comme « Pulp Fiction ».", answer: "UXVpIGVzdCBRdWVudGluIFRhcmFudGlubyA/" },
+      { clue: "Cette trilogie de films met en scène un jeune sorcier orphelin élevé par des Moldus.", answer: "UXUnZXN0LWNlIHF1ZSBIYXJyeSBQb3R0ZXIgPw==" },
+      { clue: "Ce réalisateur mexicain a remporté l'Oscar du meilleur réalisateur pour « La Forme de l'eau ».", answer: "UXVpIGVzdCBHdWlsbGVybW8gZGVsIFRvcm8gPw==" },
     ] },
     { value: 300, pool: [
       { clue: "Ce studio d'animation japonais a produit « Le Voyage de Chihiro ».", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTdHVkaW8gR2hpYmxpID8=" },
       { clue: "Cette comédienne française, égérie de la Nouvelle Vague, a joué dans « À bout de souffle ».", answer: "UXVpIGVzdCBKZWFuIFNlYmVyZyA/" },
       { clue: "Cette actrice américaine a incarné Katniss Everdeen dans la saga Hunger Games.", answer: "UXVpIGVzdCBKZW5uaWZlciBMYXdyZW5jZSA/" },
       { clue: "Ce film de 1994 raconte la vie d'un homme simple d'esprit traversant les grands événements du XXe siècle américain.", answer: "UXUnZXN0LWNlIHF1ZSBGb3JyZXN0IEd1bXAgPw==" },
+      { clue: "Cette série espagnole met en scène un braquage de la Fabrique Nationale de la Monnaie, menée par le Professeur.", answer: "UXUnZXN0LWNlIHF1ZSBMYSBDYXNhIGRlIFBhcGVsID8=" },
+      { clue: "Ce réalisateur danois est connu pour son style provocateur dans « Melancholia » et « Antichrist ».", answer: "UXVpIGVzdCBMYXJzIHZvbiBUcmllciA/" },
     ] },
     { value: 400, pool: [
       { clue: "Cet acteur américain a incarné Iron Man dans l'univers cinématographique Marvel.", answer: "UXVpIGVzdCBSb2JlcnQgRG93bmV5IEpyLiA/" },
       { clue: "Ce réalisateur américain a créé les sagas Indiana Jones et Jurassic Park.", answer: "UXVpIGVzdCBTdGV2ZW4gU3BpZWxiZXJnID8=" },
       { clue: "Cette série américaine dépeint la transformation d'un professeur de chimie en baron de la drogue.", answer: "UXUnZXN0LWNlIHF1ZSBCcmVha2luZyBCYWQgPw==" },
       { clue: "Ce réalisateur canadien a réalisé Titanic et Avatar.", answer: "UXVpIGVzdCBKYW1lcyBDYW1lcm9uID8=" },
+      { clue: "Cette cérémonie hollywoodienne récompense chaque année les meilleurs films avec des statuettes dorées.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgT3NjYXJzID8=" },
+      { clue: "Ce film sud-coréen a remporté la Palme d'or et l'Oscar du meilleur film en 2019 et 2020.", answer: "UXUnZXN0LWNlIHF1ZSBQYXJhc2l0ZSA/" },
     ] },
     { value: 500, pool: [
       { clue: "Cette série met en scène des familles nobles se disputant le Trône de Fer.", answer: "UXUnZXN0LWNlIHF1ZSBHYW1lIG9mIFRocm9uZXMgPw==" },
       { clue: "Ce film de 1941, souvent cité comme le plus grand film de l'histoire, retrace la vie d'un magnat de la presse.", answer: "UXUnZXN0LWNlIHF1ZSBDaXRpemVuIEthbmUgPw==" },
       { clue: "Ce film de 1972 raconte l'histoire de la famille mafieuse Corleone.", answer: "UXUnZXN0LWNlIHF1ZSBMZSBQYXJyYWluID8=" },
       { clue: "Ce réalisateur néo-zélandais a adapté la trilogie du Seigneur des Anneaux au cinéma.", answer: "UXVpIGVzdCBQZXRlciBKYWNrc29uID8=" },
+      { clue: "Ce réalisateur soviétique a théorisé le montage cinématographique avec le film « Le Cuirassé Potemkine ».", answer: "UXVpIGVzdCBTZXJndWXDryBFaXNlbnN0ZWluID8=" },
+      { clue: "Cette actrice suédoise, muse d'Ingmar Bergman, s'est illustrée dans « Persona » et « Cris et Chuchotements ».", answer: "UXVpIGVzdCBMaXYgVWxsbWFubiA/" },
     ] },
   ]},
   { title: "Sport", clues: [
@@ -854,30 +942,40 @@ const CATEGORIES = [
       { clue: "Ce sport oppose deux équipes de cinq joueurs qui tentent de marquer dans un panier.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiYXNrZXRiYWxsID8=" },
       { clue: "Ce sport se joue avec une balle ovale et deux équipes qui tentent d'aplatir le ballon dans l'en-but adverse.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBydWdieSA/" },
       { clue: "Ce sport nautique consiste à glisser sur l'eau debout sur une planche tractée par une vague.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzdXJmID8=" },
+      { clue: "Ce sport se joue avec les pieds et un ballon rond, opposant deux équipes de onze joueurs.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBmb290YmFsbCA/" },
+      { clue: "Ce sport de raquette se joue en simple ou en double sur un court divisé par un filet.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0ZW5uaXMgPw==" },
     ] },
     { value: 200, pool: [
       { clue: "Cette compétition de football se déroule tous les quatre ans entre équipes nationales.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBDb3VwZSBkdSBNb25kZSA/" },
       { clue: "Ce tournoi de tennis londonien, le plus ancien du monde, se joue sur gazon.", answer: "UXUnZXN0LWNlIHF1ZSBXaW1ibGVkb24gPw==" },
       { clue: "Cette compétition cycliste française, créée en 1903, parcourt le pays chaque été en plusieurs étapes.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBUb3VyIGRlIEZyYW5jZSA/" },
       { clue: "Ce sport de combat japonais, discipline olympique, vise à projeter ou immobiliser l'adversaire.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBqdWRvID8=" },
+      { clue: "Ces jeux internationaux, organisés tous les quatre ans, réunissent des athlètes du monde entier depuis l'Antiquité grecque.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgSmV1eCBvbHltcGlxdWVzID8=" },
+      { clue: "Ce sport se pratique sur une patinoire, avec des patins et un palet appelé rondelle.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBob2NrZXkgc3VyIGdsYWNlID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Ce pays est considéré comme l'inventeur du rugby moderne, né à Rugby School au XIXe siècle.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FuZ2xldGVycmUgPw==" },
       { clue: "Cette épreuve d'athlétisme combine course, saut et lancer sur deux jours et dix disciplines.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6ljYXRobG9uID8=" },
       { clue: "Ce pays a remporté la Coupe du monde de football à cinq reprises, un record.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCcsOpc2lsID8=" },
       { clue: "Cette compétition automobile, la plus prestigieuse, oppose des monoplaces sur des circuits du monde entier.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBGb3JtdWxlIDEgPw==" },
+      { clue: "Cette compétition annuelle de football européen oppose les meilleurs clubs du continent depuis 1955.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBMaWd1ZSBkZXMgY2hhbXBpb25zID8=" },
+      { clue: "Ce sport de combat se pratique pieds et poings nus, popularisé en Thaïlande.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBib3hlIHRoYcOvIChNdWF5IFRoYcOvKSA/" },
     ] },
     { value: 400, pool: [
       { clue: "Ce cycliste français a remporté le Tour de France à cinq reprises dans les années 1960.", answer: "UXVpIGVzdCBKYWNxdWVzIEFucXVldGlsID8=" },
       { clue: "Cette joueuse américaine détient le record du plus grand nombre de titres du Grand Chelem en simple à l'ère Open.", answer: "UXVpIGVzdCBTZXJlbmEgV2lsbGlhbXMgPw==" },
       { clue: "Ce footballeur argentin a remporté le Ballon d'or à sept reprises et la Coupe du monde 2022.", answer: "UXVpIGVzdCBMaW9uZWwgTWVzc2kgPw==" },
       { clue: "Ce footballeur portugais est l'un des rares, avec Messi, à avoir marqué plus de 800 buts en carrière.", answer: "UXVpIGVzdCBDcmlzdGlhbm8gUm9uYWxkbyA/" },
+      { clue: "Cette course cycliste italienne, l'équivalent transalpin du Tour de France, se déroule chaque printemps.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBUb3VyIGQnSXRhbGllIChHaXJvKSA/" },
+      { clue: "Ce pilote allemand de Formule 1 détient le record de sept titres mondiaux, à égalité avec Lewis Hamilton.", answer: "UXVpIGVzdCBNaWNoYWVsIFNjaHVtYWNoZXIgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Ce nageur américain détient le record du plus grand nombre de médailles olympiques toutes disciplines confondues, avec 23 titres.", answer: "UXVpIGVzdCBNaWNoYWVsIFBoZWxwcyA/" },
       { clue: "Ce boxeur américain, trois fois champion du monde des poids lourds, se surnommait « The Greatest ».", answer: "UXVpIGVzdCBNb2hhbWVkIEFsaSA/" },
       { clue: "Ce sprinteur jamaïcain détient les records du monde du 100 et du 200 mètres.", answer: "UXVpIGVzdCBVc2FpbiBCb2x0ID8=" },
       { clue: "Cette gymnaste américaine, multiple championne olympique, est l'une des plus décorées de l'histoire.", answer: "UXVpIGVzdCBTaW1vbmUgQmlsZXMgPw==" },
+      { clue: "Cette joueuse tchèque puis américaine a remporté 18 titres du Grand Chelem en simple dans les années 1970-1990.", answer: "UXVpIGVzdCBNYXJ0aW5hIE5hdnLDoXRpbG92w6EgPw==" },
+      { clue: "Ce marathonien éthiopien a été le premier coureur d'Afrique subsaharienne à remporter le marathon olympique, pieds nus, en 1960.", answer: "UXVpIGVzdCBBYmViZSBCaWtpbGEgPw==" },
     ] },
   ]},
   { title: "Musique", clues: [
@@ -886,30 +984,40 @@ const CATEGORIES = [
       { clue: "Cet instrument à clavier possède 88 touches, blanches et noires.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwaWFubyA/" },
       { clue: "Cet instrument à vent, symbole du jazz, est joué en pinçant une anche simple sur un bec.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzYXhvcGhvbmUgPw==" },
       { clue: "Ce groupe suédois a triomphé à l'Eurovision 1974 avec « Waterloo ».", answer: "UXUnZXN0LWNlIHF1J0FCQkEgPw==" },
+      { clue: "Cet instrument à cordes se joue à l'archet et est le plus aigu de la famille des violons.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB2aW9sb24gPw==" },
+      { clue: "Ce genre musical né dans les années 1970 dans le Bronx repose sur le rap et le sample.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBoaXAtaG9wID8=" },
     ] },
     { value: 200, pool: [
       { clue: "Cet instrument à cordes pincées possède généralement six cordes et un manche fretté.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBndWl0YXJlID8=" },
       { clue: "Ce genre musical né à la Nouvelle-Orléans au début du XXe siècle repose largement sur l'improvisation.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBqYXp6ID8=" },
       { clue: "Ce genre musical né en Jamaïque dans les années 1960 est associé à Bob Marley.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByZWdnYWUgPw==" },
       { clue: "Cet instrument à percussion se joue avec des baguettes sur des peaux tendues et des cymbales.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYXR0ZXJpZSA/" },
+      { clue: "Ce chanteur français, disparu en 2001, a interprété « Ne me quitte pas » et « La Bohème ».", answer: "UXVpIGVzdCBDaGFybGVzIEF6bmF2b3VyID8=" },
+      { clue: "Cette chanteuse française, symbole de Paris, a interprété « La Vie en rose » et « Non, je ne regrette rien ».", answer: "UXVpIGVzdCDDiWRpdGggUGlhZiA/" },
     ] },
     { value: 300, pool: [
       { clue: "Ce groupe britannique formé à Liverpool en 1960 comptait Lennon, McCartney, Harrison et Starr.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgQmVhdGxlcyA/" },
       { clue: "Ce chanteur américain surnommé le « Roi du rock » a marqué les années 1950 avec « Jailhouse Rock ».", answer: "UXVpIGVzdCBFbHZpcyBQcmVzbGV5ID8=" },
       { clue: "Ce chanteur américain, surnommé le « Roi de la pop », a sorti l'album Thriller en 1982.", answer: "UXVpIGVzdCBNaWNoYWVsIEphY2tzb24gPw==" },
       { clue: "Ce groupe britannique de rock, mené par Freddie Mercury, a interprété « Bohemian Rhapsody ».", answer: "UXUnZXN0LWNlIHF1ZSBRdWVlbiA/" },
+      { clue: "Ce concours musical télévisé européen annuel a vu triompher ABBA et Céline Dion.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0V1cm92aXNpb24gPw==" },
+      { clue: "Ce groupe américain de rock alternatif, mené par Kurt Cobain, a marqué les années 1990 avec « Smells Like Teen Spirit ».", answer: "UXUnZXN0LWNlIHF1ZSBOaXJ2YW5hID8=" },
     ] },
     { value: 400, pool: [
       { clue: "Cette chanteuse québécoise a interprété le générique du film Titanic, une célèbre ballade de 1997.", answer: "UXVpIGVzdCBDw6lsaW5lIERpb24gPw==" },
       { clue: "Ce festival de musique et d'art créé en 1970 se déroule chaque été dans le désert californien.", answer: "UXUnZXN0LWNlIHF1ZSBDb2FjaGVsbGEgPw==" },
       { clue: "Cette chanteuse américaine, surnommée la « Reine de la pop », a sorti « Like a Virgin » en 1984.", answer: "UXVpIGVzdCBNYWRvbm5hID8=" },
       { clue: "Ce festival de musique britannique se tient chaque été sur une ferme du Somerset depuis 1970.", answer: "UXUnZXN0LWNlIHF1ZSBHbGFzdG9uYnVyeSA/" },
+      { clue: "Ce compositeur russe a écrit les ballets « Le Lac des cygnes » et « Casse-Noisette ».", answer: "UXVpIGVzdCBQaW90ciBJbGl0Y2ggVGNoYcOva292c2tpID8=" },
+      { clue: "Ce rappeur américain, fondateur du label Def Jam avec Rick Rubin, dirige désormais Def Jam Recordings.", answer: "UXVpIGVzdCBSdXNzZWxsIFNpbW1vbnMgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Ce compositeur autrichien a écrit plus de 600 œuvres avant sa mort à 35 ans en 1791.", answer: "UXVpIGVzdCBXb2xmZ2FuZyBBbWFkZXVzIE1vemFydCA/" },
       { clue: "Ce compositeur allemand du XVIIIe siècle, maître du contrepoint, est l'auteur des Concertos brandebourgeois.", answer: "UXVpIGVzdCBKZWFuLVPDqWJhc3RpZW4gQmFjaCA/" },
       { clue: "Ce compositeur allemand du romantisme a écrit l'opéra « La Walkyrie ».", answer: "UXVpIGVzdCBSaWNoYXJkIFdhZ25lciA/" },
       { clue: "Ce violoniste et compositeur italien du XIXe siècle était réputé pour une virtuosité qu'on disait diabolique.", answer: "UXVpIGVzdCBOaWNjb2zDsiBQYWdhbmluaSA/" },
+      { clue: "Ce compositeur français impressionniste a écrit « Clair de lune » et le « Prélude à l'après-midi d'un faune ».", answer: "UXVpIGVzdCBDbGF1ZGUgRGVidXNzeSA/" },
+      { clue: "Cette cantatrice australienne du début du XXe siècle a donné son nom à une pêche Melba et un toast Melba.", answer: "UXVpIGVzdCBOZWxsaWUgTWVsYmEgPw==" },
     ] },
   ]},
   { title: "Art & Littérature", clues: [
@@ -918,30 +1026,40 @@ const CATEGORIES = [
       { clue: "Cet écrivain français du XIXe siècle a écrit « Le Comte de Monte-Cristo » et « Les Trois Mousquetaires ».", answer: "UXVpIGVzdCBBbGV4YW5kcmUgRHVtYXMgPw==" },
       { clue: "Cet écrivain anglais du XVIe siècle est l'auteur de « Roméo et Juliette » et « Hamlet ».", answer: "UXVpIGVzdCBXaWxsaWFtIFNoYWtlc3BlYXJlID8=" },
       { clue: "Ce peintre italien de la Renaissance a peint le plafond de la chapelle Sixtine.", answer: "UXVpIGVzdCBNaWNoZWwtQW5nZSA/" },
+      { clue: "Cet écrivain français du XIXe siècle a écrit « Notre-Dame de Paris » et « Les Misérables ».", answer: "UXVpIGVzdCBWaWN0b3IgSHVnbyA/" },
+      { clue: "Ce peintre hollandais du Siècle d'or a peint « La Ronde de nuit ».", answer: "UXVpIGVzdCBSZW1icmFuZHQgPw==" },
     ] },
     { value: 200, pool: [
       { clue: "Ce roman de Victor Hugo raconte l'histoire de Jean Valjean, un ancien bagnard.", answer: "UXUnZXN0LWNlIHF1ZSBMZXMgTWlzw6lyYWJsZXMgPw==" },
       { clue: "Ce peintre espagnol est le fondateur du cubisme avec Georges Braque.", answer: "UXVpIGVzdCBQYWJsbyBQaWNhc3NvID8=" },
       { clue: "Cet écrivain français du XIXe siècle a écrit « Madame Bovary ».", answer: "UXVpIGVzdCBHdXN0YXZlIEZsYXViZXJ0ID8=" },
       { clue: "Ce mouvement pictural du XIXe siècle, nommé d'après un tableau de Monet, privilégie les jeux de lumière.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2ltcHJlc3Npb25uaXNtZSA/" },
+      { clue: "Ce conte de Charles Perrault met en scène une jeune fille perdant sa pantoufle de verre à minuit.", answer: "UXUnZXN0LWNlIHF1ZSBDZW5kcmlsbG9uID8=" },
+      { clue: "Cette écrivaine anglaise du XIXe siècle est l'autrice d'« Orgueil et Préjugés ».", answer: "UXVpIGVzdCBKYW5lIEF1c3RlbiA/" },
     ] },
     { value: 300, pool: [
       { clue: "Cette œuvre de Léonard de Vinci, exposée au Louvre, est célèbre pour son sourire énigmatique.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBKb2NvbmRlID8=" },
       { clue: "Cet écrivain russe est l'auteur de « Guerre et Paix » et « Anna Karénine ».", answer: "UXVpIGVzdCBMw6lvbiBUb2xzdG/DryA/" },
       { clue: "Ce peintre norvégien a peint « Le Cri » en 1893.", answer: "UXVpIGVzdCBFZHZhcmQgTXVuY2ggPw==" },
       { clue: "Cet écrivain français du siècle des Lumières est l'auteur du conte philosophique « Candide ».", answer: "UXVpIGVzdCBWb2x0YWlyZSA/" },
+      { clue: "Ce peintre autrichien du mouvement Sécession viennoise a peint « Le Baiser » couvert de feuilles d'or.", answer: "UXVpIGVzdCBHdXN0YXYgS2xpbXQgPw==" },
+      { clue: "Cet écrivain américain, prix Nobel de littérature, est l'auteur du « Vieil Homme et la Mer ».", answer: "UXVpIGVzdCBFcm5lc3QgSGVtaW5nd2F5ID8=" },
     ] },
     { value: 400, pool: [
       { clue: "Cet écrivain français a créé le détective Arsène Lupin, gentleman-cambrioleur.", answer: "UXVpIGVzdCBNYXVyaWNlIExlYmxhbmMgPw==" },
       { clue: "Ce sculpteur français a réalisé « Le Penseur » et « Les Bourgeois de Calais ».", answer: "UXVpIGVzdCBBdWd1c3RlIFJvZGluID8=" },
       { clue: "Cette autrice britannique a créé le sorcier Harry Potter.", answer: "UXVpIGVzdCBKLksuIFJvd2xpbmcgPw==" },
       { clue: "Ce peintre néerlandais du XVIIe siècle a peint « La Jeune Fille à la perle ».", answer: "UXVpIGVzdCBKb2hhbm5lcyBWZXJtZWVyID8=" },
+      { clue: "Ce peintre mexicain a multiplié les autoportraits marqués par la douleur physique et l'identité.", answer: "UXVpIGVzdCBGcmlkYSBLYWhsbyA/" },
+      { clue: "Cet écrivain tchèque de langue allemande a écrit « La Métamorphose », où un homme se réveille transformé en insecte.", answer: "UXVpIGVzdCBGcmFueiBLYWZrYSA/" },
     ] },
     { value: 500, pool: [
       { clue: "Ce mouvement artistique du début du XXe siècle, porté par Picasso et Braque, fragmente les formes en volumes géométriques.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjdWJpc21lID8=" },
       { clue: "Cet écrivain irlandais a bouleversé le roman moderne avec « Ulysse », publié en 1922.", answer: "UXVpIGVzdCBKYW1lcyBKb3ljZSA/" },
       { clue: "Cet écrivain colombien, prix Nobel de littérature 1982, a écrit « Cent ans de solitude ».", answer: "UXVpIGVzdCBHYWJyaWVsIEdhcmPDrWEgTcOhcnF1ZXogPw==" },
       { clue: "Ce mouvement littéraire et artistique du XXe siècle explore l'inconscient et les rêves, porté par André Breton.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzdXJyw6lhbGlzbWUgPw==" },
+      { clue: "Ce peintre flamand du XVe siècle a peint le triptyque « Le Jardin des délices ».", answer: "UXVpIGVzdCBKw6lyw7RtZSBCb3NjaCA/" },
+      { clue: "Cette poétesse américaine du XIXe siècle a vécu recluse et n'a été publiée massivement qu'après sa mort.", answer: "UXVpIGVzdCBFbWlseSBEaWNraW5zb24gPw==" },
     ] },
   ]},
   { title: "Technologie", clues: [
@@ -950,30 +1068,40 @@ const CATEGORIES = [
       { clue: "Ce moteur de recherche, lancé en 1998, est devenu synonyme de recherche sur Internet.", answer: "UXUnZXN0LWNlIHF1ZSBHb29nbGUgPw==" },
       { clue: "Ce fondateur de Microsoft a aussi créé la fondation caritative Bill & Melinda Gates.", answer: "UXVpIGVzdCBCaWxsIEdhdGVzID8=" },
       { clue: "Cette technologie permet de se connecter à Internet sans fil grâce aux ondes radio.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBXaS1GaSA/" },
+      { clue: "Ce petit appareil permet de naviguer sur un écran d'ordinateur en le déplaçant sur une surface plane.", answer: "UXUnZXN0LWNlIHF1J3VuZSBzb3VyaXMgPw==" },
+      { clue: "Cette messagerie instantanée verte est utilisée par plus de deux milliards de personnes dans le monde.", answer: "UXUnZXN0LWNlIHF1ZSBXaGF0c0FwcCA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce langage de programmation, créé en 1991, porte le nom d'une troupe comique britannique et non du serpent.", answer: "UXUnZXN0LWNlIHF1ZSBQeXRob24gPw==" },
       { clue: "Ce réseau social fondé en 2004 par Mark Zuckerberg a été lancé depuis un dortoir de Harvard.", answer: "UXUnZXN0LWNlIHF1ZSBGYWNlYm9vayA/" },
       { clue: "Ce système d'exploitation mobile open source, développé par Google, équipe la majorité des smartphones dans le monde.", answer: "UXUnZXN0LWNlIHF1J0FuZHJvaWQgPw==" },
       { clue: "Cette entreprise américaine, cofondée par Elon Musk, produit des voitures électriques.", answer: "UXUnZXN0LWNlIHF1ZSBUZXNsYSA/" },
+      { clue: "Cette entreprise chinoise, propriétaire de TikTok, a été fondée par Zhang Yiming en 2012.", answer: "UXUnZXN0LWNlIHF1ZSBCeXRlRGFuY2UgPw==" },
+      { clue: "Ce format d'image comprime les fichiers sans trop perdre en qualité et porte le nom d'un comité d'experts.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBKUEVHID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Ce protocole permet d'afficher des pages web et commence généralement par ces lettres suivies de « :// » dans une adresse.", answer: "UXUnZXN0LWNlIHF1ZSBIVFRQID8=" },
       { clue: "Cette technologie sans fil de courte portée permet de connecter écouteurs et claviers, symbolisée par un logo bleu.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCbHVldG9vdGggPw==" },
       { clue: "Cet homme d'affaires sud-africain a fondé SpaceX et dirige Tesla.", answer: "UXVpIGVzdCBFbG9uIE11c2sgPw==" },
       { clue: "Ce réseau social basé sur des photos et vidéos courtes a été racheté par Facebook en 2012.", answer: "UXUnZXN0LWNlIHF1J0luc3RhZ3JhbSA/" },
+      { clue: "Cette entreprise fondée par Jeff Bezos en 1994 a débuté comme librairie en ligne avant de dominer le e-commerce.", answer: "UXUnZXN0LWNlIHF1J0FtYXpvbiA/" },
+      { clue: "Cet ingénieur finlandais a créé le noyau du système d'exploitation Linux en 1991.", answer: "UXVpIGVzdCBMaW51cyBUb3J2YWxkcyA/" },
     ] },
     { value: 400, pool: [
       { clue: "Cette unité de mesure informatique équivaut à environ un milliard d'octets.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBnaWdhb2N0ZXQgPw==" },
       { clue: "Ce composant électronique, cœur de l'ordinateur, exécute les instructions et les calculs.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwcm9jZXNzZXVyID8=" },
       { clue: "Cette technologie de registre décentralisé sécurise les transactions de cryptomonnaies comme le bitcoin.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBibG9ja2NoYWluID8=" },
       { clue: "Ce type d'intelligence artificielle générative, popularisé par ChatGPT, produit du texte à partir d'invites.", answer: "UXUnZXN0LWNlIHF1J3VuIGdyYW5kIG1vZMOobGUgZGUgbGFuZ2FnZSA/" },
+      { clue: "Cette technique de piratage consiste à usurper l'identité d'un site pour voler des informations personnelles.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwaGlzaGluZyAoaGFtZcOnb25uYWdlKSA/" },
+      { clue: "Cette entreprise chinoise de télécommunications a été au cœur de tensions commerciales avec les États-Unis autour de la 5G.", answer: "UXUnZXN0LWNlIHF1ZSBIdWF3ZWkgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Ce scientifique britannique est considéré comme l'inventeur du World Wide Web en 1989.", answer: "UXVpIGVzdCBUaW0gQmVybmVycy1MZWUgPw==" },
       { clue: "Cet algorithme d'apprentissage automatique imite le fonctionnement des neurones biologiques en couches successives.", answer: "UXUnZXN0LWNlIHF1J3VuIHLDqXNlYXUgZGUgbmV1cm9uZXMgPw==" },
       { clue: "Cet informaticien américain a cofondé Microsoft avec Bill Gates en 1975.", answer: "UXVpIGVzdCBQYXVsIEFsbGVuID8=" },
       { clue: "Cette loi empirique de 1965 prédit que le nombre de transistors sur une puce double environ tous les deux ans.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBsb2kgZGUgTW9vcmUgPw==" },
+      { clue: "Cet informaticien britannique, considéré comme le père de l'informatique moderne, a déchiffré la machine Enigma pendant la guerre.", answer: "UXVpIGVzdCBBbGFuIFR1cmluZyA/" },
+      { clue: "Ce test, proposé en 1950, évalue la capacité d'une machine à imiter une conversation humaine.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0ZXN0IGRlIFR1cmluZyA/" },
     ] },
   ]},
   { title: "Gastronomie", clues: [
@@ -982,30 +1110,40 @@ const CATEGORIES = [
       { clue: "Ce plat italien à base de riz crémeux est souvent préparé avec du vin blanc et du parmesan.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByaXNvdHRvID8=" },
       { clue: "Ce sandwich vietnamien, hérité de la colonisation française, se prépare dans une baguette croustillante.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiYW5oIG1pID8=" },
       { clue: "Ce plat japonais consiste en des morceaux de riz vinaigré associés à du poisson cru.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzdXNoaSA/" },
+      { clue: "Ce fruit jaune et courbé pousse en régimes sur des bananiers.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYW5hbmUgPw==" },
+      { clue: "Ce plat italien à base de pâte, sauce tomate et fromage fondu est cuit au four.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwaXp6YSA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce fromage à pâte molle et croûte fleurie porte le nom d'une commune de Seine-et-Marne.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBicmllID8=" },
       { clue: "Cette boisson chaude, obtenue par infusion de feuilles séchées, est la deuxième la plus consommée au monde après l'eau.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0aMOpID8=" },
       { clue: "Ce vin effervescent français, protégé par une appellation, provient d'une région du nord-est de la France.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGFtcGFnbmUgPw==" },
       { clue: "Cette pâtisserie viennoise en forme de croissant est un classique du petit-déjeuner français.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjcm9pc3NhbnQgPw==" },
+      { clue: "Cette soupe française à base d'oignons est gratinée au fromage et servie avec des croûtons.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBzb3VwZSDDoCBsJ29pZ25vbiA/" },
+      { clue: "Ce dessert glacé italien se décline en de nombreux parfums et se déguste en cornet.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBnbGFjZSAoZ2VsYXRvKSA/" },
     ] },
     { value: 300, pool: [
       { clue: "Cette sauce froide à base de jaune d'œuf, moutarde et huile est une des sauces mères de la cuisine française.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtYXlvbm5haXNlID8=" },
       { clue: "Ce champignon très recherché, appelé « diamant noir », pousse sous terre près des chênes.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB0cnVmZmUgPw==" },
       { clue: "Ce plat espagnol à base de riz safrané, de fruits de mer et de viande est originaire de Valence.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwYWVsbGEgPw==" },
       { clue: "Ce fromage bleu français, affiné dans des grottes du Massif central, porte le nom d'un village de l'Aveyron.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByb3F1ZWZvcnQgPw==" },
+      { clue: "Ce plat suisse consiste à faire fondre du fromage dans un caquelon pour y tremper des morceaux de pain.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb25kdWUgPw==" },
+      { clue: "Cette pâtisserie française en pâte feuilletée fourrée à la crème d'amandes se déguste traditionnellement le 6 janvier.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBnYWxldHRlIGRlcyByb2lzID8=" },
     ] },
     { value: 400, pool: [
       { clue: "Ce chef français, décédé en 2020, était surnommé le « pape de la cuisine » et possédait un restaurant trois étoiles près de Lyon.", answer: "UXVpIGVzdCBQYXVsIEJvY3VzZSA/" },
       { clue: "Ce guide gastronomique, créé en 1900 par un fabricant de pneus, attribue des étoiles aux restaurants.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBHdWlkZSBNaWNoZWxpbiA/" },
       { clue: "Cette cheffe américaine a fait découvrir la cuisine française au grand public via la télévision dans les années 1960.", answer: "UXVpIGVzdCBKdWxpYSBDaGlsZCA/" },
       { clue: "Ce plat mexicain consiste en une tortilla de maïs garnie de viande, légumes et sauce, pliée ou roulée.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0YWNvID8=" },
+      { clue: "Ce chef britannique excentrique, connu pour ses jurys télévisés sévères, dirige plusieurs restaurants étoilés.", answer: "UXVpIGVzdCBHb3Jkb24gUmFtc2F5ID8=" },
+      { clue: "Cette technique de cuisson consiste à saisir un aliment à très haute température dans très peu de matière grasse.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjdWlzc29uIGF1IHdvayA/" },
     ] },
     { value: 500, pool: [
       { clue: "Cette technique de cuisson à basse température sous emballage hermétique préserve textures et saveurs.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjdWlzc29uIHNvdXMgdmlkZSA/" },
       { clue: "Cette discipline scientifique étudie les transformations physico-chimiques survenant lors de la cuisson des aliments.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBnYXN0cm9ub21pZSBtb2zDqWN1bGFpcmUgPw==" },
       { clue: "Cette technique de fermentation contrôlée transforme le raisin en vin grâce à des levures.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB2aW5pZmljYXRpb24gPw==" },
       { clue: "Ce guide gastronomique français concurrent du Michelin note les restaurants avec un système de toques.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBHYXVsdCBldCBNaWxsYXUgPw==" },
+      { clue: "Ce chef espagnol, ancien du restaurant El Bulli, est considéré comme le pionnier de la cuisine moléculaire.", answer: "UXVpIGVzdCBGZXJyYW4gQWRyacOgID8=" },
+      { clue: "Ce fromage français à pâte pressée cuite, utilisé dans la fondue savoyarde, porte le nom d'un massif alpin.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiZWF1Zm9ydCA/" },
     ] },
   ]},
   { title: "Mythologie", clues: [
@@ -1014,30 +1152,40 @@ const CATEGORIES = [
       { clue: "Cette déesse égyptienne de la magie et de la maternité est représentée avec un disque solaire entre des cornes de vache.", answer: "UXVpIGVzdCBJc2lzID8=" },
       { clue: "Cette déesse grecque de l'amour et de la beauté est née de l'écume de la mer.", answer: "UXVpIGVzdCBBcGhyb2RpdGUgPw==" },
       { clue: "Ce dieu égyptien du soleil, à tête de faucon, était l'une des divinités les plus vénérées d'Égypte antique.", answer: "UXVpIGVzdCBSw6ogPw==" },
+      { clue: "Cette reine des dieux grecs, épouse de Zeus, est la protectrice du mariage.", answer: "UXVpIGVzdCBIw6lyYSA/" },
+      { clue: "Ce dieu grec du vin et de la fête est souvent représenté couronné de pampres.", answer: "UXVpIGVzdCBEaW9ueXNvcyA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce héros grec ne possédait qu'un point faible, situé à son talon.", answer: "UXVpIGVzdCBBY2hpbGxlID8=" },
       { clue: "Ce dieu romain de la guerre a donné son nom à la planète rouge.", answer: "UXVpIGVzdCBNYXJzID8=" },
       { clue: "Cette déesse grecque de la sagesse et de la guerre stratégique est née de la tête de Zeus.", answer: "UXVpIGVzdCBBdGjDqW5hID8=" },
       { clue: "Ce messager ailé des dieux romains porte des sandales munies d'ailes.", answer: "UXVpIGVzdCBNZXJjdXJlID8=" },
+      { clue: "Ce roi de Thèbes tua son père et épousa sa mère sans le savoir, donnant son nom à un complexe freudien.", answer: "UXVpIGVzdCDFkmRpcGUgPw==" },
+      { clue: "Cette déesse romaine de la chasse et de la lune est l'équivalent d'Artémis chez les Grecs.", answer: "UXVpIGVzdCBEaWFuZSA/" },
     ] },
     { value: 300, pool: [
       { clue: "Cette créature égyptienne possède un corps de lion et une tête humaine, gardienne du plateau de Gizeh.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTcGhpbnggPw==" },
       { clue: "Ce héros grec accomplit douze travaux, dont tuer le lion de Némée.", answer: "UXVpIGVzdCBIw6lyYWNsw6hzIChIZXJjdWxlKSA/" },
       { clue: "Ce héros grec, roi d'Ithaque, erra dix ans en mer après la guerre de Troie.", answer: "UXVpIGVzdCBVbHlzc2UgPw==" },
       { clue: "Cette créature grecque mi-femme mi-oiseau attirait les marins par son chant.", answer: "UXUnZXN0LWNlIHF1J3VuZSBzaXLDqG5lID8=" },
+      { clue: "Ce dieu égyptien de l'inondation du Nil et de la fertilité était souvent représenté avec la peau verte.", answer: "UXVpIGVzdCBPc2lyaXMgPw==" },
+      { clue: "Ce monstre grec, mi-taureau mi-homme, était enfermé dans un labyrinthe en Crète.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBNaW5vdGF1cmUgPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Ce dieu nordique du tonnerre manie un marteau nommé Mjöllnir.", answer: "UXVpIGVzdCBUaG9yID8=" },
       { clue: "Cette gorgone au regard pétrifiant fut décapitée par Persée.", answer: "UXVpIGVzdCBNw6lkdXNlID8=" },
       { clue: "Ce dieu grec des mers et des océans porte un trident.", answer: "UXVpIGVzdCBQb3PDqWlkb24gPw==" },
       { clue: "Ce loup géant nordique, fils de Loki, doit dévorer Odin lors du Ragnarök.", answer: "UXUnZXN0LWNlIHF1ZSBGZW5yaXIgPw==" },
+      { clue: "Cette déesse hindoue aux nombreux bras est associée à la destruction et au pouvoir transformateur.", answer: "UXVpIGVzdCBLw6Jsw64gPw==" },
+      { clue: "Ce dieu grec des forgerons, boiteux, forgea les armes des autres dieux dans son atelier volcanique.", answer: "UXVpIGVzdCBIw6lwaGHDr3N0b3MgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Dans la mythologie égyptienne, ce dieu à tête de chacal préside à la momification et pèse les âmes des défunts.", answer: "UXVpIGVzdCBBbnViaXMgPw==" },
       { clue: "Ce père des dieux nordiques, borgne, chevauche un cheval à huit pattes nommé Sleipnir.", answer: "UXVpIGVzdCBPZGluID8=" },
       { clue: "Ce titan grec fut condamné à porter le ciel sur ses épaules pour l'éternité.", answer: "UXVpIGVzdCBBdGxhcyA/" },
       { clue: "Ce serpent gigantesque nordique encercle le monde en se mordant la queue.", answer: "UXUnZXN0LWNlIHF1ZSBKw7ZybXVuZ2FuZHIgPw==" },
+      { clue: "Ce héros nordique tua le dragon Fáfnir et s'empara d'un trésor maudit dans la légende des Nibelungen.", answer: "UXVpIGVzdCBTaWd1cmQgPw==" },
+      { clue: "Cette prophétesse troyenne, condamnée à ne jamais être crue, avait reçu son don d'Apollon.", answer: "UXVpIGVzdCBDYXNzYW5kcmUgPw==" },
     ] },
   ]},
   { title: "Espace", clues: [
@@ -1046,30 +1194,40 @@ const CATEGORIES = [
       { clue: "Ce satellite naturel est le seul astre, hormis la Terre, sur lequel l'humain a marché.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBMdW5lID8=" },
       { clue: "Cette étoile est celle autour de laquelle gravitent toutes les planètes du système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBTb2xlaWwgPw==" },
       { clue: "Cette planète, la plus grande du système solaire, possède une célèbre tache rouge.", answer: "UXUnZXN0LWNlIHF1ZSBKdXBpdGVyID8=" },
+      { clue: "Cette planète, la deuxième du système solaire, est la plus chaude à cause de son épaisse atmosphère.", answer: "UXUnZXN0LWNlIHF1ZSBWw6ludXMgPw==" },
+      { clue: "Ce point lumineux brillant la nuit, visible à l'œil nu, peut être une étoile ou une planète.", answer: "UXUnZXN0LWNlIHF1J3VuZSDDqXRvaWxlID8=" },
     ] },
     { value: 200, pool: [
       { clue: "Cette agence spatiale américaine a envoyé les premiers hommes sur la Lune en 1969.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBOQVNBID8=" },
       { clue: "Cette planète possède le plus grand système d'anneaux du système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBTYXR1cm5lID8=" },
       { clue: "Cet astronaute américain fut le premier homme à marcher sur la Lune en 1969.", answer: "UXVpIGVzdCBOZWlsIEFybXN0cm9uZyA/" },
       { clue: "Ce phénomène se produit quand la Lune passe entre la Terre et le Soleil, cachant ce dernier.", answer: "UXUnZXN0LWNlIHF1J3VuZSDDqWNsaXBzZSBzb2xhaXJlID8=" },
+      { clue: "Cette agence spatiale chinoise a fait alunir une sonde sur la face cachée de la Lune en 2019.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBDTlNBID8=" },
+      { clue: "Ce phénomène se produit lorsque la Terre passe entre le Soleil et la Lune, plongeant celle-ci dans l'ombre.", answer: "UXUnZXN0LWNlIHF1J3VuZSDDqWNsaXBzZSBsdW5haXJlID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Ce cosmonaute soviétique fut le premier être humain à voyager dans l'espace en 1961.", answer: "UXVpIGVzdCBZb3VyaSBHYWdhcmluZSA/" },
       { clue: "Cette station spatiale, en orbite depuis 1998, est occupée en permanence par des astronautes internationaux.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBTdGF0aW9uIHNwYXRpYWxlIGludGVybmF0aW9uYWxlID8=" },
       { clue: "Cette agence spatiale européenne regroupe une vingtaine de pays membres, dont la France.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VTQSA/" },
       { clue: "Ce physicien anglais a théorisé le rayonnement émis par les trous noirs, aujourd'hui appelé de son nom.", answer: "UXVpIGVzdCBTdGVwaGVuIEhhd2tpbmcgPw==" },
+      { clue: "Cette astronaute française a passé plusieurs mois à bord de la Station spatiale internationale en 2014.", answer: "UXVpIGVzdCBDbGF1ZGllIEhhaWduZXLDqSA/" },
+      { clue: "Cette septième planète du système solaire est inclinée sur le côté et entourée d'anneaux fins.", answer: "UXUnZXN0LWNlIHF1J1VyYW51cyA/" },
     ] },
     { value: 400, pool: [
       { clue: "Cette galaxie spirale abrite notre système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBWb2llIGxhY3TDqWUgPw==" },
       { clue: "Cet astronome italien fut le premier à pointer une lunette vers le ciel pour observer les satellites de Jupiter.", answer: "UXVpIGVzdCBHYWxpbMOpZSA/" },
       { clue: "Cette entreprise américaine, fondée par Elon Musk, développe les fusées Falcon et Starship.", answer: "UXUnZXN0LWNlIHF1ZSBTcGFjZVggPw==" },
       { clue: "Cette planète naine, découverte en 1930, fut longtemps considérée comme la neuvième planète du système solaire.", answer: "UXUnZXN0LWNlIHF1ZSBQbHV0b24gPw==" },
+      { clue: "Cette mission de la NASA a ramené pour la première fois des échantillons lunaires sur Terre en 1969.", answer: "UXUnZXN0LWNlIHF1J0Fwb2xsbyAxMSA/" },
+      { clue: "Ce type d'étoile extrêmement dense résulte de l'effondrement du cœur d'une étoile massive après une supernova.", answer: "UXUnZXN0LWNlIHF1J3VuZSDDqXRvaWxlIMOgIG5ldXRyb25zID8=" },
     ] },
     { value: 500, pool: [
       { clue: "Ce télescope spatial, lancé en 2021, a succédé au télescope Hubble.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0w6lsZXNjb3BlIEphbWVzIFdlYmIgPw==" },
       { clue: "Cet effondrement gravitationnel d'une étoile massive engendre un objet dont rien, pas même la lumière, ne peut s'échapper.", answer: "UXUnZXN0LWNlIHF1J3VuIHRyb3Ugbm9pciA/" },
       { clue: "Cette astronaute et physicienne américaine fut la première femme américaine dans l'espace en 1983.", answer: "UXVpIGVzdCBTYWxseSBSaWRlID8=" },
       { clue: "Ce phénomène astronomique correspond à l'explosion finale d'une étoile massive en fin de vie.", answer: "UXUnZXN0LWNlIHF1J3VuZSBzdXBlcm5vdmEgPw==" },
+      { clue: "Cette astronome américaine a découvert des preuves de matière noire en étudiant la rotation des galaxies.", answer: "UXVpIGVzdCBWZXJhIFJ1YmluID8=" },
+      { clue: "Cette constante physique, notée G, mesure l'intensité de l'attraction gravitationnelle entre deux masses.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjb25zdGFudGUgZ3Jhdml0YXRpb25uZWxsZSA/" },
     ] },
   ]},
   { title: "Jeux Vidéo", clues: [
@@ -1078,30 +1236,40 @@ const CATEGORIES = [
       { clue: "Ce hérisson bleu véloce est la mascotte historique de Sega.", answer: "UXVpIGVzdCBTb25pYyA/" },
       { clue: "Ce personnage jaune, créé par Namco en 1980, doit manger des pac-gommes en évitant des fantômes.", answer: "UXVpIGVzdCBQYWMtTWFuID8=" },
       { clue: "Cette entreprise japonaise, éditrice de Mario et Zelda, a été fondée en 1889 comme fabricant de cartes à jouer.", answer: "UXUnZXN0LWNlIHF1ZSBOaW50ZW5kbyA/" },
+      { clue: "Ce jeu de cartes numérique et physique met en scène des créatures que l'on doit « toutes attraper ».", answer: "UXUnZXN0LWNlIHF1ZSBQb2vDqW1vbiA/" },
+      { clue: "Cette console portable de Nintendo, sortie en 1989, se jouait avec des cartouches et quatre piles AA.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBHYW1lIEJveSA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce jeu de construction suédois se joue avec des blocs cubiques dans un monde généré aléatoirement.", answer: "UXUnZXN0LWNlIHF1ZSBNaW5lY3JhZnQgPw==" },
       { clue: "Ce jeu de bataille royale, gratuit depuis 2018, est développé par Epic Games.", answer: "UXUnZXN0LWNlIHF1ZSBGb3J0bml0ZSA/" },
       { clue: "Ce jeu de tir en ligne, sorti en 2016, oppose des héros aux capacités uniques par équipes de six.", answer: "UXUnZXN0LWNlIHF1J092ZXJ3YXRjaCA/" },
       { clue: "Cette licence de simulation de vie permet de contrôler des personnages virtuels appelés Sims.", answer: "UXUnZXN0LWNlIHF1ZSBMZXMgU2ltcyA/" },
+      { clue: "Ce jeu de puzzle soviétique, créé en 1984, consiste à empiler des blocs de formes variées.", answer: "UXUnZXN0LWNlIHF1ZSBUZXRyaXMgPw==" },
+      { clue: "Cette licence de jeux de simulation de vie et d'île déserte, exclusive à Nintendo, met en scène des animaux anthropomorphes.", answer: "UXUnZXN0LWNlIHF1J0FuaW1hbCBDcm9zc2luZyA/" },
     ] },
     { value: 300, pool: [
       { clue: "Cette entreprise japonaise a créé la console PlayStation en 1994.", answer: "UXUnZXN0LWNlIHF1ZSBTb255ID8=" },
       { clue: "Cette licence de jeux de rôle japonais, débutée en 1987, compte plus de quinze épisodes numérotés.", answer: "UXUnZXN0LWNlIHF1ZSBGaW5hbCBGYW50YXN5ID8=" },
       { clue: "Cette entreprise américaine développe les licences Call of Duty et World of Warcraft.", answer: "UXUnZXN0LWNlIHF1J0FjdGl2aXNpb24gQmxpenphcmQgPw==" },
       { clue: "Ce jeu vidéo de 2011, en monde ouvert médiéval-fantastique, se déroule dans la province de Bordeciel.", answer: "UXUnZXN0LWNlIHF1ZSBTa3lyaW0gPw==" },
+      { clue: "Ce jeu vidéo en monde ouvert, sorti en 2018, met en scène un hors-la-loi de l'Ouest américain nommé Arthur Morgan.", answer: "UXUnZXN0LWNlIHF1ZSBSZWQgRGVhZCBSZWRlbXB0aW9uIDIgPw==" },
+      { clue: "Cette entreprise française d'édition de jeux vidéo est notamment derrière Assassin's Creed et Rayman.", answer: "UXUnZXN0LWNlIHF1J1ViaXNvZnQgPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Ce jeu de tir en équipe, développé par Riot Games, oppose des agents aux capacités uniques.", answer: "UXUnZXN0LWNlIHF1ZSBWYWxvcmFudCA/" },
       { clue: "Cette licence de jeux de course automobile est éditée par Nintendo depuis 1992, mettant en scène Mario et ses amis.", answer: "UXUnZXN0LWNlIHF1ZSBNYXJpbyBLYXJ0ID8=" },
       { clue: "Cette licence de jeux de rôle et d'action, développée par Nintendo, met en scène un héros nommé Link dans le royaume d'Hyrule.", answer: "UXUnZXN0LWNlIHF1ZSBUaGUgTGVnZW5kIG9mIFplbGRhID8=" },
       { clue: "Ce jeu vidéo compétitif en ligne, sorti en 2009, oppose deux équipes de cinq héros sur une seule carte.", answer: "UXUnZXN0LWNlIHF1ZSBMZWFndWUgb2YgTGVnZW5kcyA/" },
+      { clue: "Ce jeu vidéo japonais de rôle et d'action, sorti en 2017, envoie Link explorer librement le royaume d'Hyrule dévasté.", answer: "UXUnZXN0LWNlIHF1ZSBCcmVhdGggb2YgdGhlIFdpbGQgPw==" },
+      { clue: "Ce créateur suédois a développé Minecraft avant de vendre son studio Mojang à Microsoft en 2014.", answer: "UXVpIGVzdCBNYXJrdXMgUGVyc3NvbiAoTm90Y2gpID8=" },
     ] },
     { value: 500, pool: [
       { clue: "Ce développeur japonais a créé les licences Zelda et Mario chez Nintendo.", answer: "UXVpIGVzdCBTaGlnZXJ1IE1peWFtb3RvID8=" },
       { clue: "Cette console de Nintendo, sortie en 2017, se transforme d'un salon à un mode portable.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBOaW50ZW5kbyBTd2l0Y2ggPw==" },
       { clue: "Cette console de Sony, sortie en 2020, a marqué la cinquième génération de la marque PlayStation.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBQbGF5U3RhdGlvbiA1ID8=" },
       { clue: "Ce jeu de tir sorti en 1993, développé par id Software, est considéré comme un pionnier du genre FPS.", answer: "UXUnZXN0LWNlIHF1ZSBEb29tID8=" },
+      { clue: "Ce jeu vidéo de 1997, souvent cité comme précurseur du jeu de rôle narratif moderne, met en scène le soldat Cloud Strife.", answer: "UXUnZXN0LWNlIHF1ZSBGaW5hbCBGYW50YXN5IFZJSSA/" },
+      { clue: "Cette entreprise polonaise, développeuse de The Witcher, a bâti sa réputation sur des jeux de rôle narratifs ambitieux.", answer: "UXUnZXN0LWNlIHF1ZSBDRCBQcm9qZWt0IFJlZCA/" },
     ] },
   ]},
   { title: "Animaux", clues: [
@@ -1110,30 +1278,40 @@ const CATEGORIES = [
       { clue: "Ce mammifère africain a le cou le plus long de tous les animaux terrestres.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBnaXJhZmUgPw==" },
       { clue: "Cet animal est le meilleur ami de l'homme, descendant domestiqué du loup.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGllbiA/" },
       { clue: "Cet oiseau incapable de voler est le plus grand oiseau vivant, originaire d'Afrique.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2F1dHJ1Y2hlID8=" },
+      { clue: "Cet animal à rayures noires et blanches vit en troupeaux dans les savanes africaines.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB6w6hicmUgPw==" },
+      { clue: "Ce petit mammifère rongeur, souvent élevé comme animal de compagnie, aime courir dans une roue.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBoYW1zdGVyID8=" },
     ] },
     { value: 200, pool: [
       { clue: "Ce marsupial australien porte ses petits dans une poche ventrale et se déplace par bonds.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBrYW5nb3Vyb3UgPw==" },
       { clue: "Cet oiseau incapable de voler, natif de l'Antarctique, se déplace en se dandinant.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtYW5jaG90ID8=" },
       { clue: "Ce félin est le plus rapide des animaux terrestres, capable d'atteindre 110 km/h.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBndcOpcGFyZCA/" },
       { clue: "Cet insecte social vit en colonies organisées et produit du miel.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FiZWlsbGUgPw==" },
+      { clue: "Ce grand félin asiatique aux rayures orange et noires est le plus grand du monde.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0aWdyZSA/" },
+      { clue: "Cet oiseau de proie nocturne possède une vision et une ouïe exceptionnelles.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBoaWJvdSAob3UgbGEgY2hvdWV0dGUpID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Ce reptile aquatique peut vivre plus de 100 ans et porte une carapace protectrice.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB0b3J0dWUgPw==" },
       { clue: "Ce reptile marin peut vivre plus de 100 ans et pond ses œufs sur les plages où il est né.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB0b3J0dWUgbWFyaW5lID8=" },
       { clue: "Ce grand singe, cousin proche de l'humain, vit principalement en Afrique centrale.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaGltcGFuesOpID8=" },
       { clue: "Ce grand mammifère herbivore porte une ou deux cornes sur le museau et possède une peau très épaisse.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByaGlub2PDqXJvcyA/" },
+      { clue: "Cet animal australien venimeux, mi-mammifère mi-oiseau en apparence, pond des œufs et possède un bec de canard.", answer: "UXUnZXN0LWNlIHF1ZSBsJ29ybml0aG9yeW5xdWUgPw==" },
+      { clue: "Ce grand mammifère aquatique herbivore, surnommé « vache de mer », vit dans les fleuves et côtes tropicales.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsYW1hbnRpbiA/" },
     ] },
     { value: 400, pool: [
       { clue: "Ce grand mammifère terrestre possède la plus longue trompe du règne animal et jamais n'oublie, dit-on.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpbMOpcGhhbnQgPw==" },
       { clue: "Ce mammifère carnivore chasse en meute et est l'ancêtre sauvage du chien domestique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsb3VwID8=" },
       { clue: "Cet amphibien peut régénérer certains de ses membres perdus, comme sa queue ou ses pattes.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBzYWxhbWFuZHJlID8=" },
       { clue: "Ce mammifère marin, l'un des plus grands prédateurs terrestres lorsqu'il est sur la banquise, vit dans l'Arctique.", answer: "UXUnZXN0LWNlIHF1ZSBsJ291cnMgcG9sYWlyZSA/" },
+      { clue: "Cet insecte capable de se métamorphoser passe par les stades d'œuf, chenille, chrysalide puis adulte ailé.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwYXBpbGxvbiA/" },
+      { clue: "Ce poisson migrateur naît en rivière, vit en mer, puis revient frayer dans son cours d'eau natal.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzYXVtb24gPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Cet animal peut changer de couleur grâce à des cellules appelées chromatophores.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYW3DqWzDqW9uID8=" },
       { clue: "Ce mammifère marin, le plus grand animal ayant jamais existé, communique par des chants pouvant parcourir des centaines de kilomètres.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYWxlaW5lIMOgIGJvc3NlID8=" },
       { clue: "Ce mammifère marin très intelligent utilise l'écholocation pour chasser et communiquer par clics et sifflements.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkYXVwaGluID8=" },
       { clue: "Ce céphalopode marin possède trois cœurs et un sang bleu grâce à l'hémocyanine.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwaWV1dnJlID8=" },
+      { clue: "Cet oiseau incapable de voler, endémique de Nouvelle-Zélande, pond un œuf énorme par rapport à sa taille.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBraXdpID8=" },
+      { clue: "Ce petit crustacé filtreur, à la base de la chaîne alimentaire marine, nourrit les baleines à fanons.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBrcmlsbCA/" },
     ] },
   ]},
   { title: "Inventions", clues: [
@@ -1142,30 +1320,40 @@ const CATEGORIES = [
       { clue: "Cette roue, l'une des plus anciennes inventions humaines, a révolutionné le transport et l'artisanat.", answer: "UXUnZXN0LWNlIHF1ZSBsYSByb3VlID8=" },
       { clue: "Cette invention permet de mesurer le temps grâce à des aiguilles tournant sur un cadran.", answer: "UXUnZXN0LWNlIHF1J3VuZSBob3Jsb2dlID8=" },
       { clue: "Ce système permet de conserver les aliments au froid pour ralentir leur dégradation.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByw6lmcmlnw6lyYXRldXIgPw==" },
+      { clue: "Cette invention permet d'écrire ou de dessiner grâce à une mine de graphite entourée de bois.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjcmF5b24gPw==" },
+      { clue: "Cet appareil permet de garder des aliments au chaud ou de cuire rapidement grâce à des ondes.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBmb3VyIMOgIG1pY3JvLW9uZGVzID8=" },
     ] },
     { value: 200, pool: [
       { clue: "Cet inventeur américain est associé à l'ampoule électrique et détient plus de 1000 brevets.", answer: "UXVpIGVzdCBUaG9tYXMgRWRpc29uID8=" },
       { clue: "Cette invention chinoise, mélange de salpêtre, soufre et charbon, a transformé la guerre et les feux d'artifice.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwb3VkcmUgw6AgY2Fub24gPw==" },
       { clue: "Cet inventeur serbo-américain a développé le courant alternatif et donné son nom à une unité de champ magnétique.", answer: "UXVpIGVzdCBOaWtvbGEgVGVzbGEgPw==" },
       { clue: "Cette invention du XIe siècle chinois permet de s'orienter grâce au champ magnétique terrestre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBib3Vzc29sZSA/" },
+      { clue: "Cet inventeur écossais du XIXe siècle a mis au point la première télévision mécanique.", answer: "UXVpIGVzdCBKb2huIExvZ2llIEJhaXJkID8=" },
+      { clue: "Cette invention de Louis Braque puis perfectionnée permet de fermer un vêtement grâce à deux rangées de dents entrelacées.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmZXJtZXR1cmUgw6ljbGFpciA/" },
     ] },
     { value: 300, pool: [
       { clue: "Ces frères français ont inventé le cinématographe et projeté le premier film en 1895.", answer: "UXVpIHNvbnQgbGVzIGZyw6hyZXMgTHVtacOocmUgPw==" },
       { clue: "Ce médecin écossais a découvert la pénicilline par accident en 1928.", answer: "UXVpIGVzdCBBbGV4YW5kZXIgRmxlbWluZyA/" },
       { clue: "Ces deux frères américains ont réalisé le premier vol motorisé en 1903 à Kitty Hawk.", answer: "UXVpIHNvbnQgbGVzIGZyw6hyZXMgV3JpZ2h0ID8=" },
       { clue: "Cet ingénieur écossais a inventé le premier téléviseur mécanique fonctionnel en 1925.", answer: "UXVpIGVzdCBKb2huIExvZ2llIEJhaXJkID8=" },
+      { clue: "Cet inventeur américain a mis au point le stylo à bille moderne dans les années 1940 avec son frère.", answer: "UXVpIGVzdCBMw6FzemzDsyBCw61yw7MgPw==" },
+      { clue: "Cette invention suisse du velcro s'inspire des fruits de bardane qui s'accrochent aux vêtements.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB2ZWxjcm8gPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Cette invention du XIXe siècle par Alfred Nobel a révolutionné les travaux publics et la guerre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkeW5hbWl0ZSA/" },
       { clue: "Ce système d'écriture en points en relief, inventé par un Français au XIXe siècle, permet aux aveugles de lire.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBicmFpbGxlID8=" },
       { clue: "Cette invention de Karl Benz en 1885 est considérée comme la première automobile moderne à essence.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2F1dG9tb2JpbGUgPw==" },
       { clue: "Ce physicien italien a inventé la pile électrique en 1800, ancêtre de la batterie moderne.", answer: "UXVpIGVzdCBBbGVzc2FuZHJvIFZvbHRhID8=" },
+      { clue: "Cet ingénieur américain a inventé l'ampoule à incandescence pratique et durable en 1879.", answer: "UXVpIGVzdCBUaG9tYXMgRWRpc29uID8=" },
+      { clue: "Cette invention de Percy Spencer, née d'une observation fortuite sur une barre chocolatée fondue, a donné naissance au micro-ondes.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBmb3VyIMOgIG1pY3JvLW9uZGVzID8=" },
     ] },
     { value: 500, pool: [
       { clue: "Ce physicien écossais a inventé le téléphone en 1876.", answer: "UXVpIGVzdCBBbGV4YW5kZXIgR3JhaGFtIEJlbGwgPw==" },
       { clue: "Ce couple de scientifiques franco-polonais a découvert le radium et le polonium, remportant deux prix Nobel.", answer: "UXVpIHNvbnQgUGllcnJlIGV0IE1hcmllIEN1cmllID8=" },
       { clue: "Cette machine, conçue par Charles Babbage au XIXe siècle, est considérée comme l'ancêtre de l'ordinateur.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtYWNoaW5lIGFuYWx5dGlxdWUgPw==" },
       { clue: "Cette technique médicale, mise au point par Edward Jenner en 1796, a permis d'éradiquer la variole.", answer: "UXUnZXN0LWNlIHF1ZSBsYSB2YWNjaW5hdGlvbiA/" },
+      { clue: "Cet ingénieur américain d'origine croate a mis au point le moteur à induction et le courant alternatif polyphasé.", answer: "UXVpIGVzdCBOaWtvbGEgVGVzbGEgPw==" },
+      { clue: "Cette invention du XIIIe siècle, attribuée à des artisans italiens, a permis de corriger la vue grâce à des verres.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgbHVuZXR0ZXMgPw==" },
     ] },
   ]},
   { title: "Langues & Mots", clues: [
@@ -1174,30 +1362,40 @@ const CATEGORIES = [
       { clue: "Cette langue officielle du Brésil est aussi parlée au Portugal et en Angola.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwb3J0dWdhaXMgPw==" },
       { clue: "Cette langue est la langue officielle de l'Espagne et de la majorité de l'Amérique latine.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VzcGFnbm9sID8=" },
       { clue: "Cette langue germanique est la langue officielle de l'Allemagne, de l'Autriche et d'une partie de la Suisse.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FsbGVtYW5kID8=" },
+      { clue: "Cette langue est parlée par la majorité des habitants du Japon.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBqYXBvbmFpcyA/" },
+      { clue: "Ce mot désigne un ensemble de lettres formant une unité de sens dans une phrase.", answer: "UXUnZXN0LWNlIHF1J3VuIG1vdCA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce mot français, utilisé pour saluer, est emprunté par de nombreuses langues étrangères.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtb3QgJ2JvbmpvdXInID8=" },
       { clue: "Cet alphabet de 33 lettres est utilisé pour écrire le russe et d'autres langues slaves.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FscGhhYmV0IGN5cmlsbGlxdWUgPw==" },
       { clue: "Ce mot d'origine française désigne un petit restaurant convivial servant une cuisine simple.", answer: "UXUnZXN0LWNlIHF1J3VuIGJpc3Ryb3QgPw==" },
       { clue: "Cet alphabet, utilisé pour l'arabe, s'écrit de droite à gauche.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FscGhhYmV0IGFyYWJlID8=" },
+      { clue: "Cette langue officielle de la Chine est écrite avec des sinogrammes.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtYW5kYXJpbiA/" },
+      { clue: "Ce mot français désigne un ensemble organisé de règles régissant une langue.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBncmFtbWFpcmUgPw==" },
     ] },
     { value: 300, pool: [
       { clue: "Ce dramaturge anglais a écrit « Hamlet » et « Roméo et Juliette ».", answer: "UXVpIGVzdCBXaWxsaWFtIFNoYWtlc3BlYXJlID8=" },
       { clue: "Cette académie, fondée en 1635, veille sur la langue française et rédige son dictionnaire officiel.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FjYWTDqW1pZSBmcmFuw6dhaXNlID8=" },
       { clue: "Cette langue officielle d'Israël a été relancée comme langue vivante au XXe siècle.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2jDqWJyZXUgPw==" },
       { clue: "Ce dictionnaire français de référence porte le nom de son fondateur, éditeur du XIXe siècle.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBMYXJvdXNzZSA/" },
+      { clue: "Cette langue celtique est parlée en Bretagne, en France.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBicmV0b24gPw==" },
+      { clue: "Ce mot d'origine arabe, désignant un chiffre nul, a donné son nom en français au zéro.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtb3QgwqsgesOpcm8gwrsgPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Cette langue construite fut créée en 1887 pour faciliter la communication internationale.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VzcMOpcmFudG8gPw==" },
       { clue: "Ce système d'écriture japonais utilise des idéogrammes empruntés au chinois.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBrYW5qaSA/" },
       { clue: "Cette figure de style consiste à comparer deux éléments à l'aide d'un mot comparatif comme « comme ».", answer: "UXUnZXN0LWNlIHF1J3VuZSBjb21wYXJhaXNvbiA/" },
       { clue: "Ce système d'écriture chinois utilise des caractères logographiques plutôt qu'un alphabet.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgc2lub2dyYW1tZXMgPw==" },
+      { clue: "Cette langue bantoue est la plus parlée d'Afrique de l'Est, notamment au Kenya et en Tanzanie.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzd2FoaWxpID8=" },
+      { clue: "Ce linguiste suisse, père de la linguistique moderne, a distingué langue et parole au début du XXe siècle.", answer: "UXVpIGVzdCBGZXJkaW5hbmQgZGUgU2F1c3N1cmUgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Cette langue est la plus parlée au monde en nombre de locuteurs natifs.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtYW5kYXJpbiA/" },
       { clue: "Cette langue ancienne, mère des langues romanes comme le français et l'italien, était parlée dans la Rome antique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsYXRpbiA/" },
       { clue: "Cette langue officielle de l'Inde s'écrit avec l'alphabet devanagari.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2hpbmRpID8=" },
       { clue: "Ce phénomène linguistique désigne l'emprunt d'un mot d'une langue à une autre, comme « week-end » en français.", answer: "UXUnZXN0LWNlIHF1J3VuIGFuZ2xpY2lzbWUgPw==" },
+      { clue: "Cette langue isolée, sans lien démontré avec aucune autre famille linguistique connue, est parlée au Pays basque.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiYXNxdWUgPw==" },
+      { clue: "Ce dialecte scandinave ancien, parlé par les Vikings, est l'ancêtre du suédois, du norvégien et de l'islandais.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB2aWV1eCBub3Jyb2lzID8=" },
     ] },
   ]},
   { title: "Automobile", clues: [
@@ -1206,30 +1404,40 @@ const CATEGORIES = [
       { clue: "Cette entreprise américaine, fondée par Henry Ford, a popularisé la production en chaîne avec le modèle T.", answer: "UXUnZXN0LWNlIHF1ZSBGb3JkID8=" },
       { clue: "Cette marque française au losange a été fondée par Louis Renault en 1899.", answer: "UXUnZXN0LWNlIHF1ZSBSZW5hdWx0ID8=" },
       { clue: "Ce type de véhicule fonctionne uniquement grâce à une batterie et un moteur électrique, sans essence.", answer: "UXUnZXN0LWNlIHF1J3VuZSB2b2l0dXJlIMOpbGVjdHJpcXVlID8=" },
+      { clue: "Cet organe permet à la voiture de s'arrêter en ralentissant les roues par friction.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBmcmVpbiA/" },
+      { clue: "Ce constructeur allemand fondé en 1937 est associé au slogan « Das Auto ».", answer: "UXUnZXN0LWNlIHF1ZSBWb2xrc3dhZ2VuID8=" },
     ] },
     { value: 200, pool: [
       { clue: "Ce type de moteur, inventé en 1893, fonctionne sans bougies d'allumage grâce à l'auto-inflammation.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtb3RldXIgZGllc2VsID8=" },
       { clue: "Ce dispositif de sécurité, obligatoire depuis les années 1970, retient les occupants en cas de choc.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjZWludHVyZSBkZSBzw6ljdXJpdMOpID8=" },
       { clue: "Cette marque japonaise, connue pour sa fiabilité, produit notamment la Corolla.", answer: "UXUnZXN0LWNlIHF1ZSBUb3lvdGEgPw==" },
       { clue: "Ce dispositif de sécurité se gonfle automatiquement en cas de choc pour protéger les occupants.", answer: "UXUnZXN0LWNlIHF1J3VuIGFpcmJhZyA/" },
+      { clue: "Cette marque française au chevron a été fondée par André Citroën en 1919.", answer: "UXUnZXN0LWNlIHF1ZSBDaXRyb8OrbiA/" },
+      { clue: "Cet appareil de bord indique la vitesse à laquelle roule le véhicule.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjb21wdGV1ciBkZSB2aXRlc3NlICh0YWNoeW3DqHRyZSkgPw==" },
     ] },
     { value: 300, pool: [
       { clue: "Ce fondateur italien a donné son nom à un cheval cabré rouge sur fond jaune.", answer: "UXVpIGVzdCBFbnpvIEZlcnJhcmkgPw==" },
       { clue: "Cette compétition automobile, la plus célèbre course d'endurance, se déroule chaque année en France depuis 1923.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgMjQgSGV1cmVzIGR1IE1hbnMgPw==" },
       { clue: "Cette marque allemande de luxe utilise un logo à hélice bleue et blanche.", answer: "UXUnZXN0LWNlIHF1ZSBCTVcgPw==" },
       { clue: "Ce type de transmission permet de changer de vitesse automatiquement sans intervention du conducteur.", answer: "UXUnZXN0LWNlIHF1J3VuZSBib8OudGUgYXV0b21hdGlxdWUgPw==" },
+      { clue: "Cette marque coréenne, aujourd'hui l'un des plus grands constructeurs mondiaux, possède aussi Kia.", answer: "UXUnZXN0LWNlIHF1ZSBIeXVuZGFpID8=" },
+      { clue: "Ce type de carburant fossile alimente la majorité des moteurs à essence classiques.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2Vzc2VuY2UgPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Cette voiture allemande au design arrondi et emblématique fut produite de 1938 à 2003.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBDb2NjaW5lbGxlIChWb2xrc3dhZ2VuKSA/" },
       { clue: "Cette catégorie de course automobile réunit les monoplaces les plus rapides du monde, avec des Grands Prix disputés sur cinq continents.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBGb3JtdWxlIDEgPw==" },
       { clue: "Cette marque italienne de voitures de luxe, basée à Sant'Agata Bolognese, utilise un taureau comme emblème.", answer: "UXUnZXN0LWNlIHF1ZSBMYW1ib3JnaGluaSA/" },
       { clue: "Ce constructeur suédois, réputé pour la sécurité de ses véhicules, fut racheté par un groupe chinois en 2010.", answer: "UXUnZXN0LWNlIHF1ZSBWb2x2byA/" },
+      { clue: "Cette voiture de sport britannique emblématique, associée à James Bond, est fabriquée depuis 1913.", answer: "UXUnZXN0LWNlIHF1J0FzdG9uIE1hcnRpbiA/" },
+      { clue: "Ce constructeur automobile japonais, rival de Toyota, produit la Skyline et la GT-R.", answer: "UXUnZXN0LWNlIHF1ZSBOaXNzYW4gPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Cet homme d'affaires franco-libano-brésilien a dirigé l'alliance Renault-Nissan avant une chute spectaculaire.", answer: "UXVpIGVzdCBDYXJsb3MgR2hvc24gPw==" },
       { clue: "Ce constructeur américain, dirigé par Elon Musk, a démocratisé la voiture électrique haut de gamme.", answer: "UXUnZXN0LWNlIHF1ZSBUZXNsYSA/" },
       { clue: "Cet ingénieur allemand a déposé le brevet du premier véhicule à moteur à combustion en 1886.", answer: "UXVpIGVzdCBLYXJsIEJlbnogPw==" },
       { clue: "Cette technologie permet à une voiture de rouler sans conducteur grâce à des capteurs et une intelligence artificielle.", answer: "UXUnZXN0LWNlIHF1J3VuZSB2b2l0dXJlIGF1dG9ub21lID8=" },
+      { clue: "Cet ingénieur français est à l'origine de la traction avant et de la suspension hydropneumatique chez Citroën.", answer: "UXVpIGVzdCBBbmRyw6kgTGVmw6hidnJlID8=" },
+      { clue: "Cette voiture de course française a remporté les 24 Heures du Mans à plusieurs reprises dans les années 1990, développée par une marque au losange.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBQZXVnZW90IDkwNSA/" },
     ] },
   ]},
   { title: "Mode", clues: [
@@ -1238,30 +1446,40 @@ const CATEGORIES = [
       { clue: "Ce vêtement traditionnel japonais, porté avec une large ceinture appelée obi, se ferme sur la gauche.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBraW1vbm8gPw==" },
       { clue: "Ce vêtement couvre les jambes séparément et se porte quotidiennement à travers le monde.", answer: "UXUnZXN0LWNlIHF1J3VuIHBhbnRhbG9uID8=" },
       { clue: "Cette marque de sport américaine, fondée en 1964, utilise une virgule comme logo.", answer: "UXUnZXN0LWNlIHF1ZSBOaWtlID8=" },
+      { clue: "Ce vêtement porté sous les autres protège le haut du corps et couvre les bras ou non selon les modèles.", answer: "UXUnZXN0LWNlIHF1J3VuIHQtc2hpcnQgPw==" },
+      { clue: "Cette matière textile naturelle, issue du cocon d'un ver, est réputée pour sa douceur et son éclat.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBzb2llID8=" },
     ] },
     { value: 200, pool: [
       { clue: "Ce vêtement en toile de coton résistant, popularisé par les cow-boys américains, se décline en denim.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBqZWFuID8=" },
       { clue: "Cet accessoire porté au cou ou en foulard est devenu emblématique de la maison Hermès.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYXJyw6kgKGZvdWxhcmQpID8=" },
       { clue: "Cette maison de couture française, fondée en 1854, est identifiable à son motif de lettres entrelacées.", answer: "UXUnZXN0LWNlIHF1ZSBMb3VpcyBWdWl0dG9uID8=" },
       { clue: "Ce sac à main emblématique de la maison Hermès porte le nom d'une chanteuse et actrice anglo-française.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBCaXJraW4gPw==" },
+      { clue: "Ce styliste français, né en Tunisie, a fondé sa propre maison de couture en 1962.", answer: "UXVpIGVzdCBZdmVzIFNhaW50IExhdXJlbnQgPw==" },
+      { clue: "Ce vêtement d'extérieur, souvent doublé, protège du froid et couvre le haut du corps et les bras.", answer: "UXUnZXN0LWNlIHF1J3VuIG1hbnRlYXUgPw==" },
     ] },
     { value: 300, pool: [
       { clue: "Ce couturier français a lancé le style « New Look » en 1947.", answer: "UXVpIGVzdCBDaHJpc3RpYW4gRGlvciA/" },
       { clue: "Cette chaussure à talon fin et pointu, popularisée par Roger Vivier, est un incontournable de la mode féminine.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VzY2FycGluID8=" },
       { clue: "Ce créateur allemand a dirigé Chanel pendant plus de 30 ans jusqu'à sa mort en 2019.", answer: "UXVpIGVzdCBLYXJsIExhZ2VyZmVsZCA/" },
       { clue: "Cette matière naturelle, produite par des vers, est utilisée pour tisser des tissus fins et brillants.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBzb2llID8=" },
+      { clue: "Cette marque allemande de sport, rivale de Nike, utilise trois bandes comme logo emblématique.", answer: "UXUnZXN0LWNlIHF1J0FkaWRhcyA/" },
+      { clue: "Ce couturier italien, assassiné en 1997, a fondé une maison de luxe reconnue pour ses imprimés Méduse.", answer: "UXVpIGVzdCBHaWFubmkgVmVyc2FjZSA/" },
     ] },
     { value: 400, pool: [
       { clue: "Ce terme désigne les vêtements sur mesure fabriqués selon des techniques artisanales strictes, à Paris.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBoYXV0ZSBjb3V0dXJlID8=" },
       { clue: "Cette marque italienne de luxe, fondée en 1921, est reconnue pour son motif de losanges beige et marron.", answer: "UXUnZXN0LWNlIHF1ZSBHdWNjaSA/" },
       { clue: "Cette marque espagnole de prêt-à-porter à bas coût, fondée par Amancio Ortega, est devenue l'une des plus grandes chaînes de mode au monde.", answer: "UXUnZXN0LWNlIHF1ZSBaYXJhID8=" },
       { clue: "Ce magazine de mode américain, fondé en 1892, est dirigé depuis 1988 par Anna Wintour.", answer: "UXUnZXN0LWNlIHF1ZSBWb2d1ZSA/" },
+      { clue: "Cette maison de couture française, fondée en 1937, est associée à un sac rigide porté par Grace Kelly.", answer: "UXUnZXN0LWNlIHF1J0hlcm3DqHMgPw==" },
+      { clue: "Ce créateur belge, membre des « Six d'Anvers », est réputé pour son minimalisme radical.", answer: "UXVpIGVzdCBNYXJ0aW4gTWFyZ2llbGEgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Ce couturier français, ancien assistant de Dior, a démocratisé le smoking pour femme.", answer: "UXVpIGVzdCBZdmVzIFNhaW50IExhdXJlbnQgPw==" },
       { clue: "Cette semaine d'événements, organisée deux fois par an dans plusieurs capitales, présente les collections des grands créateurs.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBGYXNoaW9uIFdlZWsgPw==" },
       { clue: "Cette créatrice italienne a fondé sa maison de mode en 1927 et était connue pour son style extravagant, rivale de Chanel.", answer: "UXVpIGVzdCBFbHNhIFNjaGlhcGFyZWxsaSA/" },
       { clue: "Ce styliste britannique, connu pour ses créations provocantes, a dirigé la maison Givenchy avant sa mort en 2010.", answer: "UXVpIGVzdCBBbGV4YW5kZXIgTWNRdWVlbiA/" },
+      { clue: "Cette créatrice française, fondatrice de sa maison en 1985, a habillé Lady Diana avec une robe controversée dite « robe de la vengeance ».", answer: "UXVpIGVzdCBDaHJpc3RpbmEgU3RhbWJvbGlhbiA/" },
+      { clue: "Ce photographe américain, célèbre pour ses portraits de mode en noir et blanc, a longtemps travaillé pour Vogue.", answer: "UXVpIGVzdCBSaWNoYXJkIEF2ZWRvbiA/" },
     ] },
   ]},
   { title: "Célébrités", clues: [
@@ -1270,30 +1488,40 @@ const CATEGORIES = [
       { clue: "Cette princesse britannique, surnommée « la princesse du peuple », est décédée dans un accident à Paris en 1997.", answer: "UXVpIGVzdCBEaWFuYSBTcGVuY2VyID8=" },
       { clue: "Ce chanteur canadien est devenu une star mondiale dès l'adolescence avec la chanson « Baby ».", answer: "UXVpIGVzdCBKdXN0aW4gQmllYmVyID8=" },
       { clue: "Cette actrice et productrice britannique incarne Hermione Granger dans la saga Harry Potter.", answer: "UXVpIGVzdCBFbW1hIFdhdHNvbiA/" },
+      { clue: "Cet acteur américain incarne Jack Sparrow dans la saga Pirates des Caraïbes.", answer: "UXVpIGVzdCBKb2hubnkgRGVwcCA/" },
+      { clue: "Cette actrice américaine a incarné Katniss Everdeen puis Mystique dans deux grandes franchises.", answer: "UXVpIGVzdCBKZW5uaWZlciBMYXdyZW5jZSA/" },
     ] },
     { value: 200, pool: [
       { clue: "Cette actrice et icône américaine des années 1950 a joué dans « Sept ans de réflexion ».", answer: "UXVpIGVzdCBNYXJpbHluIE1vbnJvZSA/" },
       { clue: "Ce boxeur et homme d'affaires américain, né Cassius Clay, s'est converti à l'islam en 1964.", answer: "UXVpIGVzdCBNb2hhbWVkIEFsaSA/" },
       { clue: "Ce chanteur américain, surnommé « The Weeknd », s'est fait connaître avec l'album Beauty Behind the Madness.", answer: "UXVpIGVzdCBUaGUgV2Vla25kID8=" },
       { clue: "Ce joueur de basket américain, surnommé « His Airness », a remporté six titres NBA avec les Chicago Bulls.", answer: "UXVpIGVzdCBNaWNoYWVsIEpvcmRhbiA/" },
+      { clue: "Cette chanteuse et actrice américaine, star de Disney Channel, a lancé sa carrière avec Hannah Montana.", answer: "UXVpIGVzdCBNaWxleSBDeXJ1cyA/" },
+      { clue: "Cet acteur américain, connu pour ses rôles d'action, a été gouverneur de Californie.", answer: "UXVpIGVzdCBBcm5vbGQgU2Nod2FyemVuZWdnZXIgPw==" },
     ] },
     { value: 300, pool: [
       { clue: "Ce chanteur britannique flamboyant menait le groupe Queen jusqu'à sa mort en 1991.", answer: "UXVpIGVzdCBGcmVkZGllIE1lcmN1cnkgPw==" },
       { clue: "Cette animatrice et femme d'affaires américaine possède l'un des talk-shows les plus regardés de l'histoire de la télévision.", answer: "UXVpIGVzdCBPcHJhaCBXaW5mcmV5ID8=" },
       { clue: "Cette actrice australienne a incarné Harley Quinn dans plusieurs films du DCEU.", answer: "UXVpIGVzdCBNYXJnb3QgUm9iYmllID8=" },
       { clue: "Ce rappeur et homme d'affaires américain, mari de Beyoncé, a fondé le label Roc Nation.", answer: "UXVpIGVzdCBKYXktWiA/" },
+      { clue: "Ce joueur de football français, champion du monde 2018, évolue au poste d'attaquant et a débuté à Monaco.", answer: "UXVpIGVzdCBLeWxpYW4gTWJhcHDDqSA/" },
+      { clue: "Cette actrice et femme d'affaires américaine a lancé sa marque de mode Skims.", answer: "UXVpIGVzdCBLaW0gS2FyZGFzaGlhbiA/" },
     ] },
     { value: 400, pool: [
       { clue: "Cet acteur américain a remporté l'Oscar pour « The Revenant » après plusieurs nominations.", answer: "UXVpIGVzdCBMZW9uYXJkbyBEaUNhcHJpbyA/" },
       { clue: "Ce fondateur sud-africain de Tesla et SpaceX est devenu l'une des personnes les plus riches du monde.", answer: "UXVpIGVzdCBFbG9uIE11c2sgPw==" },
       { clue: "Cette chanteuse américaine, connue pour « Shake It Off » et « Anti-Hero », domine les tournées mondiales.", answer: "UXVpIGVzdCBUYXlsb3IgU3dpZnQgPw==" },
       { clue: "Cet acteur américain incarne le Joker dans le film éponyme de 2019, pour lequel il a reçu un Oscar.", answer: "UXVpIGVzdCBKb2FxdWluIFBob2VuaXggPw==" },
+      { clue: "Ce chanteur britannique, révélé grâce à YouTube, est l'auteur du tube « Shape of You ».", answer: "UXVpIGVzdCBFZCBTaGVlcmFuID8=" },
+      { clue: "Cet informaticien américain, cofondateur d'Apple, est mort en 2011 après avoir révolutionné plusieurs industries.", answer: "UXVpIGVzdCBTdGV2ZSBKb2JzID8=" },
     ] },
     { value: 500, pool: [
       { clue: "Cette monarque britannique a régné plus de 70 ans, un record pour le Royaume-Uni.", answer: "UXVpIGVzdCBsYSByZWluZSBFbGl6YWJldGggSUkgPw==" },
       { clue: "Cette chanteuse américaine, surnommée « Queen Bey », a débuté dans le groupe Destiny's Child.", answer: "UXVpIGVzdCBCZXlvbmPDqSA/" },
       { clue: "Ce physicien allemand, auteur de la théorie de la relativité, est devenu une icône populaire.", answer: "UXVpIGVzdCBBbGJlcnQgRWluc3RlaW4gPw==" },
       { clue: "Cet activiste indien a mené la lutte pacifique pour l'indépendance de son pays face à l'Empire britannique.", answer: "UXVpIGVzdCBHYW5kaGkgPw==" },
+      { clue: "Cette militante pakistanaise, plus jeune lauréate du prix Nobel de la paix, défend l'éducation des filles.", answer: "UXVpIGVzdCBNYWxhbGEgWW91c2FmemFpID8=" },
+      { clue: "Ce physicien théoricien américain d'origine allemande a dirigé le projet Manhattan qui a conçu la bombe atomique.", answer: "UXVpIGVzdCBSb2JlcnQgT3BwZW5oZWltZXIgPw==" },
     ] },
   ]},
   { title: "Histoire du Monde", clues: [
@@ -1302,30 +1530,40 @@ const CATEGORIES = [
       { clue: "Cet empire fondé par Rome a duré plusieurs siècles avant sa chute en Occident en 476.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VtcGlyZSByb21haW4gPw==" },
       { clue: "Cet empire, dirigé par des empereurs, dominait le Mexique avant l'arrivée des conquistadors espagnols.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VtcGlyZSBhenTDqHF1ZSA/" },
       { clue: "Ce peuple de l'ancienne Mésopotamie a inventé l'écriture cunéiforme vers 3200 avant J.-C.", answer: "UXVpIHNvbnQgbGVzIFN1bcOpcmllbnMgPw==" },
+      { clue: "Cette pyramide égyptienne, la plus grande des trois de Gizeh, fut construite pour le pharaon Khéops.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBncmFuZGUgcHlyYW1pZGUgZGUgR2l6ZWggPw==" },
+      { clue: "Ce peuple de guerriers de la Grèce antique vivait à Sparte et entraînait ses enfants dès le plus jeune âge.", answer: "UXVpIHNvbnQgbGVzIFNwYXJ0aWF0ZXMgPw==" },
     ] },
     { value: 200, pool: [
       { clue: "Ce mur a séparé Berlin-Est et Berlin-Ouest de 1961 à 1989.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtdXIgZGUgQmVybGluID8=" },
       { clue: "Cette dynastie chinoise a fait construire une grande partie de la Grande Muraille pour se protéger des invasions.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkeW5hc3RpZSBNaW5nID8=" },
       { clue: "Cette révolution de 1917 a renversé le tsar de Russie et porté les bolcheviks au pouvoir.", answer: "UXUnZXN0LWNlIHF1ZSBsYSByw6l2b2x1dGlvbiBydXNzZSA/" },
       { clue: "Ce mur de pierre, construit par les Romains en Angleterre, marquait la limite nord de l'Empire romain en Bretagne.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtdXIgZCdIYWRyaWVuID8=" },
+      { clue: "Cet empereur romain a légalisé le christianisme dans l'Empire par l'édit de Milan en 313.", answer: "UXVpIGVzdCBDb25zdGFudGluIEllciA/" },
+      { clue: "Cette route commerciale reliait la Chine à l'Europe en traversant l'Asie centrale.", answer: "UXUnZXN0LWNlIHF1ZSBsYSByb3V0ZSBkZSBsYSBzb2llID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Ce navigateur génois, financé par les rois d'Espagne, atteint les Amériques en 1492.", answer: "UXVpIGVzdCBDaHJpc3RvcGhlIENvbG9tYiA/" },
       { clue: "Cette période de bouleversements intellectuels et artistiques en Europe débute au XIVe siècle en Italie.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBSZW5haXNzYW5jZSA/" },
       { clue: "Cette épidémie du XIVe siècle a tué environ un tiers de la population européenne.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwZXN0ZSBub2lyZSA/" },
       { clue: "Cette dynastie égyptienne a vu régner la célèbre reine Cléopâtre, dernière pharaonne d'Égypte.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkeW5hc3RpZSBwdG9sw6ltYcOvcXVlID8=" },
+      { clue: "Cette bataille de 1066 vit Guillaume le Conquérant s'emparer du trône d'Angleterre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBiYXRhaWxsZSBkZSBIYXN0aW5ncyA/" },
+      { clue: "Cet empire précolombien, centré sur Cuzco, s'étendait le long des Andes avant la conquête espagnole.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VtcGlyZSBpbmNhID8=" },
     ] },
     { value: 400, pool: [
       { clue: "Cette guerre mondiale, déclenchée en 1939, s'est achevée en 1945 après la capitulation du Japon.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBTZWNvbmRlIEd1ZXJyZSBtb25kaWFsZSA/" },
       { clue: "Cet empereur français a été vaincu à Waterloo en 1815.", answer: "UXVpIGVzdCBOYXBvbMOpb24gQm9uYXBhcnRlID8=" },
       { clue: "Cette déclaration américaine de 1776 proclame l'indépendance des treize colonies vis-à-vis du Royaume-Uni.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBEw6ljbGFyYXRpb24gZCdpbmTDqXBlbmRhbmNlID8=" },
       { clue: "Ce leader sud-africain a lutté contre l'apartheid et est devenu le premier président noir du pays en 1994.", answer: "UXVpIGVzdCBOZWxzb24gTWFuZGVsYSA/" },
+      { clue: "Cette expédition militaire médiévale visait à reprendre les Lieux saints aux musulmans.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgY3JvaXNhZGVzID8=" },
+      { clue: "Ce traité de 1919, signé après la Première Guerre mondiale, imposa de lourdes sanctions à l'Allemagne.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0cmFpdMOpIGRlIFZlcnNhaWxsZXMgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Cette guerre froide a opposé les États-Unis et l'URSS de la fin des années 1940 à 1991.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBHdWVycmUgZnJvaWRlID8=" },
       { clue: "Cet empire, dirigé par Gengis Khan, fut le plus vaste empire terrestre contigu de l'histoire.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0VtcGlyZSBtb25nb2wgPw==" },
       { clue: "Cette conférence de 1945, réunissant Churchill, Roosevelt et Staline, a redessiné les frontières de l'Europe d'après-guerre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjb25mw6lyZW5jZSBkZSBZYWx0YSA/" },
       { clue: "Cet attentat du 11 septembre 2001 a visé les tours jumelles du World Trade Center à New York.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgYXR0ZW50YXRzIGR1IDExIFNlcHRlbWJyZSA/" },
+      { clue: "Cette dynastie chinoise du XIIIe siècle, fondée par Kubilai Khan, unifia la Chine sous domination mongole.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkeW5hc3RpZSBZdWFuID8=" },
+      { clue: "Ce sac de Constantinople en 1204, mené par des croisés, affaiblit durablement l'Empire byzantin.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBxdWF0cmnDqG1lIGNyb2lzYWRlID8=" },
     ] },
   ]},
   { title: "Économie", clues: [
@@ -1334,30 +1572,40 @@ const CATEGORIES = [
       { clue: "Ce terme désigne l'échange de biens ou de services sans utiliser d'argent.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB0cm9jID8=" },
       { clue: "Ce terme désigne l'ensemble des biens et services produits par un pays en une année.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBQSUIgPw==" },
       { clue: "Cette taxe, prélevée sur la consommation, est incluse dans le prix des produits en France.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBUVkEgPw==" },
+      { clue: "Ce lieu physique ou virtuel permet d'échanger des biens contre de l'argent.", answer: "UXUnZXN0LWNlIHF1J3VuIG1hcmNow6kgPw==" },
+      { clue: "Cette pièce ou ce billet sert de moyen d'échange légal dans un pays donné.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtb25uYWllID8=" },
     ] },
     { value: 200, pool: [
       { clue: "Cette loi économique énonce que les prix évoluent selon l'offre et la demande.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBsb2kgZGUgbCdvZmZyZSBldCBkZSBsYSBkZW1hbmRlID8=" },
       { clue: "Cette institution basée à Washington prête aux pays en difficulté et surveille la stabilité financière mondiale.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBGb25kcyBtb27DqXRhaXJlIGludGVybmF0aW9uYWwgPw==" },
       { clue: "Cette banque centrale, basée à Francfort, fixe la politique monétaire de la zone euro.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBCYW5xdWUgY2VudHJhbGUgZXVyb3DDqWVubmUgPw==" },
       { clue: "Ce terme désigne la part de la population active sans emploi et en recherche de travail.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjaMO0bWFnZSA/" },
+      { clue: "Ce document résume les revenus et dépenses d'un ménage ou d'un État sur une période donnée.", answer: "UXUnZXN0LWNlIHF1J3VuIGJ1ZGdldCA/" },
+      { clue: "Cette activité consiste à placer de l'argent dans l'espoir d'en tirer un bénéfice futur.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2ludmVzdGlzc2VtZW50ID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Ce marché permet d'acheter et de vendre des actions d'entreprises cotées.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBCb3Vyc2UgPw==" },
       { clue: "Cette monnaie numérique décentralisée, créée en 2009, fonctionne sans banque centrale.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBiaXRjb2luID8=" },
       { clue: "Cette organisation internationale, fondée en 1995, régule le commerce entre ses pays membres.", answer: "UXUnZXN0LWNlIHF1ZSBsJ09yZ2FuaXNhdGlvbiBtb25kaWFsZSBkdSBjb21tZXJjZSA/" },
       { clue: "Ce type d'entreprise appartient à ses actionnaires qui détiennent des parts appelées actions.", answer: "UXUnZXN0LWNlIHF1J3VuZSBzb2Npw6l0w6kgYW5vbnltZSA/" },
+      { clue: "Ce terme désigne une entreprise qui domine un marché sans concurrence réelle.", answer: "UXUnZXN0LWNlIHF1J3VuIG1vbm9wb2xlID8=" },
+      { clue: "Cette institution américaine, banque centrale des États-Unis, fixe les taux d'intérêt directeurs du pays.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBSw6lzZXJ2ZSBmw6lkw6lyYWxlIChGZWQpID8=" },
     ] },
     { value: 400, pool: [
       { clue: "Cette hausse généralisée et durable des prix réduit le pouvoir d'achat.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2luZmxhdGlvbiA/" },
       { clue: "Cet économiste écossais du XVIIIe siècle est considéré comme le père du libéralisme économique avec « La Richesse des nations ».", answer: "UXVpIGVzdCBBZGFtIFNtaXRoID8=" },
       { clue: "Cet économiste britannique du XXe siècle a préconisé l'intervention de l'État pour relancer l'économie en temps de crise.", answer: "UXVpIGVzdCBKb2huIE1heW5hcmQgS2V5bmVzID8=" },
       { clue: "Cette pratique consiste à investir dans plusieurs actifs différents pour réduire les risques financiers.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkaXZlcnNpZmljYXRpb24gPw==" },
+      { clue: "Ce système économique repose sur la propriété privée des moyens de production et la libre concurrence.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYXBpdGFsaXNtZSA/" },
+      { clue: "Cette crise économique des années 1930, née après le krach de 1929, a duré près d'une décennie aux États-Unis.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBHcmFuZGUgRMOpcHJlc3Npb24gPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Cette crise financière de 1929, née à Wall Street, a plongé le monde dans une dépression économique majeure.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBrcmFjaCBkZSAxOTI5ID8=" },
       { clue: "Cet économiste allemand du XIXe siècle, auteur du « Capital », a théorisé la lutte des classes.", answer: "UXVpIGVzdCBLYXJsIE1hcnggPw==" },
       { clue: "Cette crise financière de 2008, née des prêts hypothécaires à risque aux États-Unis, a provoqué une récession mondiale.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjcmlzZSBkZXMgc3VicHJpbWVzID8=" },
       { clue: "Cet économiste indien, prix Nobel d'économie 1998, a travaillé sur la pauvreté et le développement humain.", answer: "UXVpIGVzdCBBbWFydHlhIFNlbiA/" },
+      { clue: "Cet économiste autrichien du XXe siècle, farouche défenseur du libéralisme, a reçu le prix Nobel en 1974.", answer: "UXVpIGVzdCBGcmllZHJpY2ggSGF5ZWsgPw==" },
+      { clue: "Cette théorie économique suppose que la richesse produite par les plus riches finit par profiter à l'ensemble de la société.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBydWlzc2VsbGVtZW50ICh0cmlja2xlLWRvd24gZWNvbm9taWNzKSA/" },
     ] },
   ]},
   { title: "Nature & Environnement", clues: [
@@ -1366,30 +1614,40 @@ const CATEGORIES = [
       { clue: "Cette vaste étendue d'arbres tropicaux en Amérique du Sud est surnommée le « poumon de la planète ».", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb3LDqnQgYW1hem9uaWVubmUgPw==" },
       { clue: "Ce phénomène naturel forme un arc de couleurs dans le ciel après la pluie, grâce à la réfraction de la lumière.", answer: "UXUnZXN0LWNlIHF1J3VuIGFyYy1lbi1jaWVsID8=" },
       { clue: "Cette pratique consiste à trier et transformer les déchets pour en réutiliser la matière.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByZWN5Y2xhZ2UgPw==" },
+      { clue: "Ce grand espace naturel protégé préserve la faune et la flore sans intervention humaine majeure.", answer: "UXUnZXN0LWNlIHF1J3VuIHBhcmMgbmF0aW9uYWwgPw==" },
+      { clue: "Ce phénomène désigne la chute de pluie, neige ou grêle depuis les nuages.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwcsOpY2lwaXRhdGlvbiA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce gaz, produit par la combustion des énergies fossiles, est le principal responsable du réchauffement climatique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkaW94eWRlIGRlIGNhcmJvbmUgKENPMikgPw==" },
       { clue: "Ce cycle naturel décrit le mouvement continu de l'eau entre océans, atmosphère et sols.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjeWNsZSBkZSBsJ2VhdSA/" },
       { clue: "Ce type d'agriculture évite les pesticides et engrais chimiques de synthèse.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FncmljdWx0dXJlIGJpb2xvZ2lxdWUgPw==" },
       { clue: "Cette énergie renouvelable capte la lumière du soleil grâce à des panneaux pour produire de l'électricité.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpbmVyZ2llIHNvbGFpcmUgPw==" },
+      { clue: "Cette pratique consiste à planter de nouveaux arbres pour restaurer une forêt disparue.", answer: "UXUnZXN0LWNlIHF1ZSBsZSByZWJvaXNlbWVudCA/" },
+      { clue: "Ce type de sol gelé en permanence se trouve dans les régions arctiques et dégèle progressivement avec le réchauffement.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwZXJtYWZyb3N0ID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Cette couche de l'atmosphère nous protège des rayons ultraviolets du Soleil.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjb3VjaGUgZCdvem9uZSA/" },
       { clue: "Ce phénomène climatique périodique dans le Pacifique modifie les températures océaniques et les régimes de pluie mondiaux.", answer: "UXUnZXN0LWNlIHF1J0VsIE5pw7FvID8=" },
       { clue: "Ce phénomène désigne la disparition progressive des forêts, souvent liée à l'agriculture ou l'exploitation du bois.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBkw6lmb3Jlc3RhdGlvbiA/" },
       { clue: "Cette organisation non gouvernementale, fondée en 1971, milite pour la protection de l'environnement.", answer: "UXUnZXN0LWNlIHF1ZSBHcmVlbnBlYWNlID8=" },
+      { clue: "Cette variété d'agriculture consiste à cultiver plusieurs espèces végétales ensemble pour renforcer un écosystème.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwZXJtYWN1bHR1cmUgPw==" },
+      { clue: "Ce vaste ensemble d'espèces vivant dans un même milieu forme, avec leur environnement, un écosystème.", answer: "UXUnZXN0LWNlIHF1J3VuZSBiaW9jw6lub3NlID8=" },
     ] },
     { value: 400, pool: [
       { clue: "Cette source d'énergie renouvelable exploite la force du vent grâce à de grandes hélices.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpbmVyZ2llIMOpb2xpZW5uZSA/" },
       { clue: "Ce traité international de 2015 vise à limiter le réchauffement climatique bien en dessous de 2°C.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FjY29yZCBkZSBQYXJpcyA/" },
       { clue: "Cette activiste suédoise, née en 2003, a lancé le mouvement des grèves scolaires pour le climat.", answer: "UXVpIGVzdCBHcmV0YSBUaHVuYmVyZyA/" },
       { clue: "Ce phénomène décrit l'augmentation du niveau des océans, notamment liée à la fonte des glaces.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtb250w6llIGRlcyBlYXV4ID8=" },
+      { clue: "Cette catastrophe industrielle de 1986, en Ukraine soviétique, reste le pire accident nucléaire civil de l'histoire.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBjYXRhc3Ryb3BoZSBkZSBUY2hlcm5vYnlsID8=" },
+      { clue: "Cet accord international de 1987 a permis de réduire les substances qui détruisent la couche d'ozone.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBwcm90b2NvbGUgZGUgTW9udHLDqWFsID8=" },
     ] },
     { value: 500, pool: [
       { clue: "Ce phénomène de fonte accélérée touche les glaciers et la banquise à cause du réchauffement climatique.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb250ZSBkZXMgZ2xhY2VzID8=" },
       { clue: "Cette sixième extinction de masse en cours, causée par l'activité humaine, menace un million d'espèces selon l'ONU.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8Opcm9zaW9uIGRlIGxhIGJpb2RpdmVyc2l0w6kgPw==" },
       { clue: "Cette conférence annuelle de l'ONU réunit les pays du monde pour négocier des actions contre le changement climatique.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBDT1AgPw==" },
       { clue: "Ce concept vise à répondre aux besoins présents sans compromettre ceux des générations futures.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6l2ZWxvcHBlbWVudCBkdXJhYmxlID8=" },
+      { clue: "Ce concept scientifique désigne l'ensemble des limites planétaires à ne pas franchir pour préserver la stabilité de la Terre.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgbGltaXRlcyBwbGFuw6l0YWlyZXMgPw==" },
+      { clue: "Cette biologiste marine américaine, autrice de « Printemps silencieux » en 1962, a alerté sur les dangers des pesticides.", answer: "UXVpIGVzdCBSYWNoZWwgQ2Fyc29uID8=" },
     ] },
   ]},
   { title: "Géographie du Monde", clues: [
@@ -1398,30 +1656,40 @@ const CATEGORIES = [
       { clue: "Ce pays d'Asie compte le plus grand nombre d'habitants au monde depuis 2023.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0luZGUgPw==" },
       { clue: "Ce continent est le plus grand et le plus peuplé du monde.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FzaWUgPw==" },
       { clue: "Ce pays d'Amérique du Nord, le plus étendu du continent, a pour capitale Ottawa.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBDYW5hZGEgPw==" },
+      { clue: "Ce pays d'Amérique du Nord, le plus peuplé du continent, a pour capitale Washington.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgw4l0YXRzLVVuaXMgPw==" },
+      { clue: "Cette capitale japonaise est la ville la plus peuplée du monde en agglomération.", answer: "UXUnZXN0LWNlIHF1ZSBUb2t5byA/" },
     ] },
     { value: 200, pool: [
       { clue: "Cette ville italienne, construite sur une lagune, se déplace en gondole plutôt qu'en voiture.", answer: "UXUnZXN0LWNlIHF1ZSBWZW5pc2UgPw==" },
       { clue: "Ce canal artificiel relie la mer Méditerranée à la mer Rouge depuis 1869.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBjYW5hbCBkZSBTdWV6ID8=" },
       { clue: "Cette capitale française est traversée par la Seine et abrite la tour Eiffel.", answer: "UXUnZXN0LWNlIHF1ZSBQYXJpcyA/" },
       { clue: "Ce désert est le plus grand désert froid du monde, situé en grande partie en Antarctique.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBkw6lzZXJ0IGFudGFyY3RpcXVlID8=" },
+      { clue: "Ce pays scandinave, connu pour ses fjords, a pour capitale Oslo.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBOb3J2w6hnZSA/" },
+      { clue: "Cette montagne, plus haut sommet d'Europe occidentale, culmine en France près de la frontière italienne.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBtb250IEJsYW5jID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Cette île française de l'océan Indien est connue pour son piton de la Fournaise, un volcan actif.", answer: "UXUnZXN0LWNlIHF1ZSBMYSBSw6l1bmlvbiA/" },
       { clue: "Ce fleuve d'Amérique du Sud est celui qui transporte le plus grand débit d'eau au monde.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FtYXpvbmUgPw==" },
       { clue: "Cette péninsule européenne regroupe l'Espagne et le Portugal.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBww6luaW5zdWxlIEliw6lyaXF1ZSA/" },
       { clue: "Ce pays africain, le plus peuplé du continent, a pour capitale Abuja et pour plus grande ville Lagos.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBOaWfDqXJpYSA/" },
+      { clue: "Ce pays d'Afrique du Nord, connu pour ses souks et le désert, a pour capitale Rabat.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBNYXJvYyA/" },
+      { clue: "Cette mer intérieure, bordée par la Russie, l'Iran et plusieurs autres pays, est en réalité un lac.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtZXIgQ2FzcGllbm5lID8=" },
     ] },
     { value: 400, pool: [
       { clue: "Cette chute d'eau, à la frontière entre le Canada et les États-Unis, est l'une des plus visitées au monde.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgY2h1dGVzIGR1IE5pYWdhcmEgPw==" },
       { clue: "Ce point culminant de l'Afrique, un volcan endormi, se situe en Tanzanie.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBLaWxpbWFuZGphcm8gPw==" },
       { clue: "Cette barrière de corail, la plus grande structure vivante du monde, se trouve au large de l'Australie.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBHcmFuZGUgQmFycmnDqHJlIGRlIGNvcmFpbCA/" },
       { clue: "Ce lac d'Asie centrale, le plus profond du monde, se trouve en Sibérie.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBsYWMgQmHDr2thbCA/" },
+      { clue: "Ce pays d'Amérique du Sud, connu pour le Machu Picchu, a pour capitale Lima.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBQw6lyb3UgPw==" },
+      { clue: "Cette région polaire du nord de l'Europe, du Canada et de la Russie est habitée notamment par les Inuits.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0FyY3RpcXVlID8=" },
     ] },
     { value: 500, pool: [
       { clue: "Ce point le plus profond des océans se trouve dans l'océan Pacifique, près des îles Mariannes.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBmb3NzZSBkZXMgTWFyaWFubmVzID8=" },
       { clue: "Ce pays d'Asie du Sud-Est est constitué de plus de 17 000 îles, ce qui en fait le plus grand archipel du monde.", answer: "UXUnZXN0LWNlIHF1ZSBsJ0luZG9uw6lzaWUgPw==" },
       { clue: "Ce fleuve européen, le plus long du continent, traverse la Russie et se jette dans la mer Caspienne.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBWb2xnYSA/" },
       { clue: "Ce pays d'Océanie, formé de deux îles principales, est situé au sud-est de l'Australie.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBOb3V2ZWxsZS1aw6lsYW5kZSA/" },
+      { clue: "Ce micro-État enclavé dans les Alpes entre la France et l'Italie a pour langue officielle l'italien.", answer: "UXUnZXN0LWNlIHF1ZSBTYWludC1NYXJpbiA/" },
+      { clue: "Cette dépression désertique d'Israël et de Jordanie constitue le point le plus bas de la surface terrestre.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBtZXIgTW9ydGUgPw==" },
     ] },
   ]},
   { title: "Bande Dessinée", clues: [
@@ -1430,30 +1698,40 @@ const CATEGORIES = [
       { clue: "Ce petit guerrier gaulois, créé par Goscinny et Uderzo, boit une potion magique qui lui donne une force surhumaine.", answer: "UXUnZXN0LWNlIHF1J0FzdMOpcml4ID8=" },
       { clue: "Cette souris est la mascotte emblématique des studios Disney depuis 1928.", answer: "UXUnZXN0LWNlIHF1ZSBNaWNrZXkgTW91c2UgPw==" },
       { clue: "Ce jeune reporter à la houppette voyage à travers le monde accompagné de son chien Milou.", answer: "UXVpIGVzdCBUaW50aW4gPw==" },
+      { clue: "Ce petit robot doré, compagnon de C-3PO, apparaît dans Star Wars mais pas dans une BD franco-belge cette fois.", answer: "UXUnZXN0LWNlIHF1ZSBSMi1EMiA/" },
+      { clue: "Ce chien blanc à taches noires accompagne Tintin dans toutes ses aventures.", answer: "UXUnZXN0LWNlIHF1ZSBNaWxvdSA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce village peuplé d'irréductibles Gaulois résiste encore et toujours à l'envahisseur romain dans la bande dessinée d'Uderzo et Goscinny.", answer: "UXUnZXN0LWNlIHF1ZSBsZSB2aWxsYWdlIGQnQXN0w6lyaXggPw==" },
       { clue: "Ce dessinateur belge a créé le personnage maladroit de Gaston Lagaffe.", answer: "UXVpIGVzdCBBbmRyw6kgRnJhbnF1aW4gPw==" },
       { clue: "Ce terme japonais désigne les bandes dessinées originaires du Japon.", answer: "UXUnZXN0LWNlIHF1J3VuIG1hbmdhID8=" },
       { clue: "Ce cow-boy solitaire, qui tire plus vite que son ombre, est accompagné de son cheval Jolly Jumper.", answer: "UXVpIGVzdCBMdWNreSBMdWtlID8=" },
+      { clue: "Ce druide gaulois, préparateur de la potion magique, est le sage du village d'Astérix.", answer: "UXVpIGVzdCBQYW5vcmFtaXggPw==" },
+      { clue: "Cette héroïne de comics DC, princesse amazone dotée d'un lasso de vérité, porte aussi le nom de Diana Prince.", answer: "UXVpIGVzdCBXb25kZXIgV29tYW4gPw==" },
     ] },
     { value: 300, pool: [
       { clue: "Ce scénariste américain a cocréé Spider-Man, les X-Men et de nombreux autres super-héros Marvel.", answer: "UXVpIGVzdCBTdGFuIExlZSA/" },
       { clue: "Ce héros milliardaire de Gotham City combat le crime déguisé en chauve-souris.", answer: "UXVpIGVzdCBCYXRtYW4gPw==" },
       { clue: "Ce festival français, qui se tient chaque année à Angoulême, est le plus grand rendez-vous de la BD en Europe.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBGZXN0aXZhbCBkJ0FuZ291bMOqbWUgPw==" },
       { clue: "Ce dessinateur américain a créé les Peanuts, mettant en scène Charlie Brown et son chien Snoopy.", answer: "UXVpIGVzdCBDaGFybGVzIFNjaHVseiA/" },
+      { clue: "Ce dessinateur et scénariste franco-belge a créé Blake et Mortimer en 1946.", answer: "UXVpIGVzdCBFZGdhciBQLiBKYWNvYnMgPw==" },
+      { clue: "Cette bande dessinée américaine met en scène un groupe de mutants menés par le professeur Xavier.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgWC1NZW4gPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Ce romancier graphique britannique a écrit Watchmen et V pour Vendetta.", answer: "UXVpIGVzdCBBbGFuIE1vb3JlID8=" },
       { clue: "Ce dessinateur japonais, créateur d'Astro Boy, est surnommé le père du manga.", answer: "UXVpIGVzdCBPc2FtdSBUZXp1a2EgPw==" },
       { clue: "Cette bande dessinée d'Art Spiegelman, qui représente les Juifs en souris et les nazis en chats, a reçu le prix Pulitzer en 1992.", answer: "UXUnZXN0LWNlIHF1ZSBNYXVzID8=" },
       { clue: "Cette autrice iranienne a raconté son enfance pendant la révolution islamique dans la bande dessinée Persepolis.", answer: "UXVpIGVzdCBNYXJqYW5lIFNhdHJhcGkgPw==" },
+      { clue: "Ce personnage de comics Marvel, mordu par une araignée radioactive, devient justicier masqué à New York.", answer: "UXVpIGVzdCBTcGlkZXItTWFuID8=" },
+      { clue: "Cette autrice et dessinatrice française a créé la série autobiographique « L'Arabe du futur ».", answer: "UXVpIGVzdCBSaWFkIFNhdHRvdWYgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Ce super-héros créé par Jerry Siegel et Joe Shuster en 1938 est considéré comme le premier super-héros de l'histoire des comics.", answer: "UXVpIGVzdCBTdXBlcm1hbiA/" },
       { clue: "Ce dessinateur suisse du XIXe siècle est considéré comme l'inventeur de la bande dessinée moderne.", answer: "UXVpIGVzdCBSb2RvbHBoZSBUw7ZwZmZlciA/" },
       { clue: "Ce mangaka japonais a créé Akira, une œuvre culte de science-fiction devenue un film d'animation en 1988.", answer: "UXVpIGVzdCBLYXRzdWhpcm8gT3RvbW8gPw==" },
       { clue: "Ce dessinateur américain, créateur du Spirit, a popularisé le terme « roman graphique » et donne son nom au plus prestigieux prix de la bande dessinée américaine.", answer: "UXVpIGVzdCBXaWxsIEVpc25lciA/" },
+      { clue: "Ce dessinateur français, cofondateur du magazine Métal Hurlant, a signé les décors du film Alien sous le nom de Mœbius.", answer: "UXVpIGVzdCBKZWFuIEdpcmF1ZCA/" },
+      { clue: "Cette maison d'édition belge, fondée en 1934, a publié Tintin, Spirou et de nombreux classiques franco-belges.", answer: "UXUnZXN0LWNlIHF1ZSBsZXMgw6lkaXRpb25zIENhc3Rlcm1hbiA/" },
     ] },
   ]},
   { title: "Philosophie", clues: [
@@ -1462,30 +1740,40 @@ const CATEGORIES = [
       { clue: "Ce philosophe français est l'auteur de la célèbre formule « Je pense donc je suis ».", answer: "UXVpIGVzdCBSZW7DqSBEZXNjYXJ0ZXMgPw==" },
       { clue: "Cette discipline philosophique interroge la nature du bien et du mal, du juste et de l'injuste.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpdGhpcXVlID8=" },
       { clue: "Ce philosophe grec, élève de Socrate, a fondé l'Académie à Athènes.", answer: "UXVpIGVzdCBQbGF0b24gPw==" },
+      { clue: "Ce mot grec, signifiant « amour de la sagesse », désigne la discipline qui questionne l'existence et la connaissance.", answer: "UXUnZXN0LWNlIHF1ZSBsYSBwaGlsb3NvcGhpZSA/" },
+      { clue: "Ce philosophe grec antique, maître d'Alexandre le Grand, a fondé le Lycée à Athènes.", answer: "UXVpIGVzdCBBcmlzdG90ZSA/" },
     ] },
     { value: 200, pool: [
       { clue: "Ce philosophe allemand du XIXe siècle a proclamé que Dieu est mort et développé le concept du surhomme.", answer: "UXVpIGVzdCBGcmllZHJpY2ggTmlldHpzY2hlID8=" },
       { clue: "Ce philosophe allemand des Lumières est l'auteur de la Critique de la raison pure.", answer: "UXVpIGVzdCBFbW1hbnVlbCBLYW50ID8=" },
       { clue: "Ce courant philosophique de la Grèce antique prône l'acceptation sereine du destin et la maîtrise des passions.", answer: "UXUnZXN0LWNlIHF1ZSBsZSBzdG/Dr2Npc21lID8=" },
       { clue: "Ce mythe philosophique de Platon compare notre perception du monde à des prisonniers regardant des ombres sur un mur.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2FsbMOpZ29yaWUgZGUgbGEgY2F2ZXJuZSA/" },
+      { clue: "Cette discipline philosophique s'interroge sur la nature de la connaissance et ses limites.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpcGlzdMOpbW9sb2dpZSA/" },
+      { clue: "Ce philosophe anglais du XVIIe siècle a théorisé le contrat social dans « Le Léviathan ».", answer: "UXVpIGVzdCBUaG9tYXMgSG9iYmVzID8=" },
     ] },
     { value: 300, pool: [
       { clue: "Ce philosophe et écrivain français, figure de l'existentialisme, a affirmé que l'existence précède l'essence.", answer: "UXVpIGVzdCBKZWFuLVBhdWwgU2FydHJlID8=" },
       { clue: "Cette philosophe française, autrice du Deuxième Sexe, est une figure majeure du féminisme du XXe siècle.", answer: "UXVpIGVzdCBTaW1vbmUgZGUgQmVhdXZvaXIgPw==" },
       { clue: "Ce penseur chinois de l'Antiquité a fondé une philosophie morale et sociale fondée sur le respect et l'harmonie.", answer: "UXVpIGVzdCBDb25mdWNpdXMgPw==" },
       { clue: "Ce courant philosophique soutient que toute connaissance provient de l'expérience sensible, à l'opposé du rationalisme.", answer: "UXUnZXN0LWNlIHF1ZSBsJ2VtcGlyaXNtZSA/" },
+      { clue: "Cette école philosophique grecque prônait la recherche du plaisir mesuré comme voie du bonheur.", answer: "UXUnZXN0LWNlIHF1ZSBsJ8OpcGljdXJpc21lID8=" },
+      { clue: "Ce philosophe danois du XIXe siècle est considéré comme le père de l'existentialisme.", answer: "UXVpIGVzdCBTw7hyZW4gS2llcmtlZ2FhcmQgPw==" },
     ] },
     { value: 400, pool: [
       { clue: "Ce philosophe allemand a développé la méthode dialectique fondée sur la thèse, l'antithèse et la synthèse.", answer: "UXVpIGVzdCBHZW9yZyBXaWxoZWxtIEZyaWVkcmljaCBIZWdlbCA/" },
       { clue: "Ce philosophe néerlandais d'origine judéo-portugaise a identifié Dieu à la nature dans son ouvrage l'Éthique.", answer: "UXVpIGVzdCBCYXJ1Y2ggU3Bpbm96YSA/" },
       { clue: "Ce philosophe genevois des Lumières est l'auteur du Contrat social et pensait que l'homme est bon par nature.", answer: "UXVpIGVzdCBKZWFuLUphY3F1ZXMgUm91c3NlYXUgPw==" },
       { clue: "Ce philosophe et économiste allemand, coauteur du Manifeste du parti communiste, a théorisé la lutte des classes.", answer: "UXVpIGVzdCBLYXJsIE1hcnggPw==" },
+      { clue: "Cette œuvre majeure de Nietzsche met en scène un prophète annonçant la mort de Dieu et le surhomme.", answer: "UXUnZXN0LWNlIHF1J0FpbnNpIHBhcmxhaXQgWmFyYXRob3VzdHJhID8=" },
+      { clue: "Ce philosophe français du XXe siècle, compagnon de Sartre, a théorisé l'absurde dans « Le Mythe de Sisyphe ».", answer: "UXVpIGVzdCBBbGJlcnQgQ2FtdXMgPw==" },
     ] },
     { value: 500, pool: [
       { clue: "Ce philosophe autrichien a affirmé que les limites de mon langage signifient les limites de mon monde.", answer: "UXVpIGVzdCBMdWR3aWcgV2l0dGdlbnN0ZWluID8=" },
       { clue: "Ce philosophe allemand du XXe siècle a exploré la question de l'être dans son ouvrage majeur Être et Temps.", answer: "UXVpIGVzdCBNYXJ0aW4gSGVpZGVnZ2VyID8=" },
       { clue: "Ce philosophe français a analysé les rapports entre pouvoir et savoir, notamment dans Surveiller et punir.", answer: "UXVpIGVzdCBNaWNoZWwgRm91Y2F1bHQgPw==" },
       { clue: "Ce philosophe andalou du XIIe siècle a rédigé d'importants commentaires sur l'œuvre d'Aristote et influencé la pensée médiévale européenne.", answer: "UXVpIGVzdCBBdmVycm/DqHMgPw==" },
+      { clue: "Ce philosophe allemand du XXe siècle, membre de l'école de Francfort, a écrit « Dialectique de la raison » avec Adorno.", answer: "UXVpIGVzdCBNYXggSG9ya2hlaW1lciA/" },
+      { clue: "Cette philosophe française du XXe siècle, mystique et engagée, a écrit « La Pesanteur et la Grâce ».", answer: "UXVpIGVzdCBTaW1vbmUgV2VpbCA/" },
     ] },
   ]},
 ];
@@ -1514,6 +1802,10 @@ function resetRenderCaches(){
   seenReactionIds = new Set();
   chatSig = null;
   seenChatIds = new Set();
+  autoAdvanceScheduledForRound = null;
+  winnerShownForRound = null;
+  const winnerLayer = document.getElementById('winnerLayer');
+  if(winnerLayer) winnerLayer.innerHTML = '';
 }
 
 let audioCtx = null;
@@ -1871,22 +2163,103 @@ function currentCategories(){
   return state.config.rounds[state.round] || [];
 }
 
+let autoAdvanceScheduledForRound = null;
+let winnerShownForRound = null;
+
 function renderRoundBanner(){
   const el = document.getElementById('roundBanner');
   const rounds = state.config.rounds;
-  if(rounds.length <= 1){ el.innerHTML = ''; return; }
   const catIndices = rounds[state.round];
   const allDone = catIndices.every(ci => state.answered[ci].every(Boolean));
   const isLast = state.round === rounds.length - 1;
-  let html = '<span class="round-label">Manche ' + (state.round + 1) + ' / ' + rounds.length + '</span>';
+
+  let html = '';
+  if(rounds.length > 1){
+    html = '<span class="round-label">Manche ' + (state.round + 1) + ' / ' + rounds.length + '</span>';
+  }
+
   if(allDone && !isLast){
-    html += '<button class="btn gold round-next-btn" id="nextRoundBtn" type="button">Manche suivante →</button>';
+    html += '<span class="round-complete auto-advance"><span class="mini-spinner"></span> Manche terminée — passage à la manche suivante…</span>';
+    if(autoAdvanceScheduledForRound !== state.round){
+      autoAdvanceScheduledForRound = state.round;
+      const roundNow = state.round;
+      setTimeout(() => { advanceRound(roundNow); }, 2200);
+    }
   } else if(allDone && isLast){
-    html += '<span class="round-complete">🏁 Partie terminée !</span>';
+    if(rounds.length > 1) html += '<span class="round-complete">🏁 Partie terminée !</span>';
+    if(winnerShownForRound !== state.round){
+      winnerShownForRound = state.round;
+      showWinnerModal();
+    }
+  } else {
+    autoAdvanceScheduledForRound = null;
   }
   el.innerHTML = html;
-  const btn = document.getElementById('nextRoundBtn');
-  if(btn) btn.addEventListener('click', advanceRound);
+}
+
+function showWinnerModal(){
+  const layer = document.getElementById('winnerLayer');
+  const players = Object.entries(state.scores).map(([id, p]) => ({ id, ...p }));
+  if(players.length === 0){ layer.innerHTML = ''; return; }
+  players.sort((a, b) => b.score - a.score);
+  const topScore = players[0].score;
+  const winners = players.filter(p => p.score === topScore);
+  const isTie = winners.length > 1 && topScore > 0;
+  const soloRecap = state.config.mode === 'solo';
+
+  let headline, subline;
+  if(soloRecap){
+    headline = 'Partie terminée !';
+    subline = 'Score final : ' + topScore + ' points.';
+  } else if(isTie){
+    headline = 'Égalité !';
+    subline = winners.map(w => escapeHtml(w.name)).join(' & ') + ' terminent à égalité avec ' + topScore + ' points.';
+  } else {
+    headline = escapeHtml(winners[0].name) + ' remporte la partie !';
+    subline = 'Avec ' + topScore + ' points, ' + (winners[0].id === me.id ? 'bravo à vous' : 'félicitations') + ' 🎉';
+  }
+
+  const podium = players.slice(0, 3).map((p, i) => {
+    const medal = ['🥇','🥈','🥉'][i] || '';
+    return '<div class="podium-row' + (p.score === topScore && topScore > 0 ? ' top' : '') + '">' +
+      '<span class="podium-medal">' + medal + '</span>' +
+      '<span class="player-avatar" style="background:' + p.color + '">' + escapeHtml(avatarGlyph(p)) + '</span>' +
+      '<span class="podium-name">' + escapeHtml(p.name) + (p.id === me.id ? ' <span class="you-tag">(vous)</span>' : '') + '</span>' +
+      '<span class="podium-score">' + p.score + '</span>' +
+    '</div>';
+  }).join('');
+
+  const rest = players.slice(3);
+  const restHtml = rest.length ? '<div class="podium-rest">' + rest.map((p, i) =>
+    '<div class="podium-rest-row"><span>' + (i + 4) + '. ' + escapeHtml(p.name) + '</span><span>' + p.score + '</span></div>'
+  ).join('') + '</div>' : '';
+
+  layer.innerHTML =
+    '<div class="overlay">' +
+      '<div class="modal winner-modal" id="winnerModal" style="animation: modalPop .4s cubic-bezier(.2,.8,.3,1.2);">' +
+        '<div class="winner-confetti" id="winnerConfetti"></div>' +
+        '<div class="winner-trophy">' + (soloRecap ? '🏁' : '🏆') + '</div>' +
+        '<h2>' + headline + '</h2>' +
+        '<p>' + subline + '</p>' +
+        '<div class="podium">' + podium + '</div>' +
+        restHtml +
+        '<div class="row-actions">' +
+          '<button class="btn ghost" id="winnerReviewBtn" type="button">Revoir le plateau</button>' +
+          '<button class="btn gold" id="winnerReplayBtn" type="button">Rejouer</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  spawnConfetti(document.getElementById('winnerConfetti'));
+  playSound('correct');
+
+  document.getElementById('winnerReviewBtn').addEventListener('click', () => {
+    layer.innerHTML = '';
+  });
+  document.getElementById('winnerReplayBtn').addEventListener('click', () => {
+    layer.innerHTML = '';
+    resetGame(true);
+  });
 }
 
 function renderBoard(){
@@ -2301,9 +2674,10 @@ async function closeQuestion(){
   });
 }
 
-async function advanceRound(){
+async function advanceRound(fromRound){
   await mutateState(s => {
     if(!s.config) return false;
+    if(typeof fromRound === 'number' && s.round !== fromRound) return false; // stale trigger, someone already advanced
     if(s.round >= s.config.rounds.length - 1) return false;
     s.round += 1;
     s.active = null;
@@ -2319,9 +2693,13 @@ async function switchToSolo(){
   });
 }
 
-async function resetGame(){
+async function resetGame(skipConfirm){
   if(!state) return;
-  if(!confirm('Réinitialiser le plateau et les scores pour tous les joueurs de la salle ?')) return;
+  if(!skipConfirm && !confirm('Réinitialiser le plateau et les scores pour tous les joueurs de la salle ?')) return;
+  autoAdvanceScheduledForRound = null;
+  winnerShownForRound = null;
+  const winnerLayer = document.getElementById('winnerLayer');
+  if(winnerLayer) winnerLayer.innerHTML = '';
   await mutateState(s => {
     const config = s.config;
     const fresh = freshBoardState(config);
@@ -2474,6 +2852,7 @@ function showJoinPrompt(){
         [0,1,2,3].map(i => '<input type="text" maxlength="1" class="room-box" data-idx="' + i + '" value="' + escapeHtml((defaultRoom[i] || '').toUpperCase()) + '" />').join('') +
       '</div><button class="dice-btn" id="copyRoomBtn" type="button" title="Copier le code">' + ICON_COPY + '</button><button class="dice-btn" id="diceBtn" type="button" title="Générer un nouveau code">' + ICON_REFRESH + '</button></div>' +
       '<div class="copy-feedback" id="roomCopyFeedback">Copié dans le presse-papiers !</div>' +
+      '<div class="room-status" id="roomStatus"></div>' +
       (hasLastRoom ? '<div class="rejoin-hint" id="rejoinHint">Reprendre votre dernière salle : <b>' + escapeHtml(me.lastRoom) + '</b></div>' : '') +
       '<div class="field-label">Votre pseudo</div>' +
       '<input type="text" class="name-input" id="nameInput" placeholder="Votre pseudo" maxlength="20" minlength="3" value="' + escapeHtml(defaultName) + '" />' +
@@ -2509,6 +2888,81 @@ function showJoinPrompt(){
     return getRoomBoxes().map(b => b.value.trim().toUpperCase()).join('');
   }
 
+  // Live check: as soon as a full 4-letter code is entered, look up whether that
+  // room already exists. If it does (a host already set it up), the mode/rounds/
+  // categories controls are greyed out and synced to the host's actual settings,
+  // so a joiner can't accidentally think they're choosing something that will
+  // actually apply — the existing room's config always wins on join anyway.
+  let roomLocked = false;
+  let roomCheckTimer = null;
+  let roomCheckSeq = 0;
+
+  function setRoomStatus(kind, html){
+    const st = document.getElementById('roomStatus');
+    if(!st) return;
+    if(!html){ st.className = 'room-status'; st.innerHTML = ''; return; }
+    st.className = 'room-status show ' + kind;
+    st.innerHTML = html;
+  }
+
+  function applyLockedConfig(config, playerCount){
+    selectedMode = config.mode;
+    selectedRounds = config.rounds.length;
+    selectedCategoryIndices = config.rounds.reduce((a, g) => a.concat(g), []);
+    roomLocked = true;
+    document.querySelectorAll('.mode-opt').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === selectedMode);
+      b.disabled = true; b.classList.add('locked');
+    });
+    document.querySelectorAll('.round-opt').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.rounds, 10) === selectedRounds);
+      b.disabled = true; b.classList.add('locked');
+    });
+    document.querySelectorAll('.cat-chip').forEach(b => {
+      const idx = parseInt(b.dataset.idx, 10);
+      b.classList.toggle('active', selectedCategoryIndices.includes(idx));
+      b.disabled = true;
+    });
+    const randomBtn = document.getElementById('randomCatsBtn');
+    if(randomBtn) randomBtn.disabled = true;
+    updateCatCount();
+    setRoomStatus('found', '🔒 Salle existante — ' + playerCount + ' joueur' + (playerCount > 1 ? 's' : '') + ' déjà dedans. Les réglages sont fixés par l\'hôte.');
+  }
+
+  function releaseLockedConfig(){
+    if(!roomLocked) return;
+    roomLocked = false;
+    document.querySelectorAll('.mode-opt, .round-opt, .cat-chip').forEach(b => {
+      b.disabled = false; b.classList.remove('locked');
+    });
+    const randomBtn = document.getElementById('randomCatsBtn');
+    if(randomBtn) randomBtn.disabled = false;
+  }
+
+  async function checkRoomExistence(){
+    const code = getRoomCode();
+    if(code.length < 4){ releaseLockedConfig(); setRoomStatus('', ''); return; }
+    const seq = ++roomCheckSeq;
+    setRoomStatus('checking', '<span class="room-status-spinner"></span> Vérification de la salle ' + escapeHtml(code) + '…');
+    const data = await fsGetRoom(code);
+    if(seq !== roomCheckSeq) return; // a newer check superseded this one
+    if(getRoomCode() !== code) return; // code changed while we were waiting
+    const valid = data && Array.isArray(data.answered) && data.config &&
+                  Array.isArray(data.config.rounds) && data.config.rounds.length > 0 &&
+                  data.scores && Object.keys(data.scores).length > 0;
+    if(valid){
+      applyLockedConfig(data.config, Object.keys(data.scores).length);
+    } else {
+      releaseLockedConfig();
+      setRoomStatus('free', '✨ Ce code est libre — vous serez l\'hôte de cette salle.');
+    }
+  }
+
+  function scheduleRoomCheck(){
+    if(roomCheckTimer) clearTimeout(roomCheckTimer);
+    roomCheckTimer = setTimeout(checkRoomExistence, 400);
+  }
+
   let roomCopyTimer = null;
   const doCopyRoomCode = async () => {
     const ok = await copyToClipboard(getRoomCode());
@@ -2530,6 +2984,7 @@ function showJoinPrompt(){
     box.addEventListener('input', () => {
       box.value = box.value.toUpperCase().replace(/[^A-Z]/g, '').slice(-1);
       if(box.value && i < boxes.length - 1){ boxes[i+1].focus(); boxes[i+1].select(); }
+      scheduleRoomCheck();
     });
     box.addEventListener('keydown', (e) => {
       if(e.key === 'Backspace' && !box.value && i > 0){ boxes[i-1].focus(); boxes[i-1].select(); }
@@ -2546,6 +3001,7 @@ function showJoinPrompt(){
       const next = boxes[Math.min(letters.length, boxes.length - 1)];
       next.focus();
       next.select();
+      scheduleRoomCheck();
     });
   });
 
@@ -2553,13 +3009,17 @@ function showJoinPrompt(){
   document.getElementById('diceBtn').addEventListener('click', () => {
     setRoomCode(randomRoomCode(4));
     playSound('click');
+    scheduleRoomCheck();
   });
   if(hasLastRoom){
     document.getElementById('rejoinHint').addEventListener('click', () => {
       setRoomCode(me.lastRoom);
+      scheduleRoomCheck();
     });
   }
   bindPickers(profile);
+  // Check the pre-filled default code once on open too.
+  scheduleRoomCheck();
 
   document.querySelectorAll('.mode-opt').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2671,7 +3131,7 @@ async function init(rawConfig){
   return { nameConflict: false };
 }
 
-document.getElementById('resetBtn').addEventListener('click', resetGame);
+document.getElementById('resetBtn').addEventListener('click', () => resetGame());
 document.getElementById('soloSwitchBtn').addEventListener('click', switchToSolo);
 document.querySelectorAll('.reaction-btn').forEach(btn => {
   btn.addEventListener('click', () => reactToGame(btn.dataset.emoji));
