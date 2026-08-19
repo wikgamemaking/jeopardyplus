@@ -125,6 +125,13 @@
     font-size:15px; font-weight:700; color:#1a1400;
     flex-shrink:0;
   }
+  .avatar-wrap{ position:relative; display:inline-flex; flex-shrink:0; }
+  .presence-dot{
+    position:absolute; right:-1px; bottom:-1px; width:9px; height:9px; border-radius:50%;
+    border:2px solid var(--panel); background: var(--muted);
+  }
+  .presence-dot.online{ background:#3ecf6b; }
+  .presence-dot.away{ background:#f2b705; }
 
   .room-bar{
     display:flex; align-items:center; justify-content:space-between; gap:11px; flex-wrap:wrap;
@@ -217,6 +224,37 @@
   .layout{ display:grid; grid-template-columns: 1fr 260px; gap: 22px; align-items:start; }
   @media (max-width: 860px){ .layout{ grid-template-columns: 1fr; } }
 
+  @media (max-width: 640px){
+    #root{ padding: 14px 10px 40px; }
+    .brand{ gap:8px; }
+    .brand .tag{ font-size:13px; }
+    .room-bar{ padding:12px 14px; font-size:13px; gap:8px; }
+    .room-left, .room-right{ gap:8px; }
+    .sidebar{ padding:14px; }
+    .modal{ padding:22px 18px; border-radius: var(--radius-md); }
+    .modal h2{ font-size:21px; }
+    .modal p{ font-size:13.5px; }
+    .clue-text{ font-size:19px; margin: 8px 0 18px; }
+    .clue-value{ font-size:15px; }
+    .buzz-btn{ width:92px; height:92px; font-size:15px; }
+    .answer-form{ flex-direction:column; }
+    .answer-form input{ width:100%; }
+    .answer-form .btn{ width:100%; }
+    .mode-options, .round-options{ flex-wrap:wrap; }
+    .mode-opt, .round-opt{ min-width: calc(50% - 4px); }
+    .cat-chip{ font-size:12px; padding:7px 10px; }
+    .room-box{ width:38px; height:44px; font-size:18px; }
+    .row-actions{ flex-direction:column; }
+    .row-actions .btn{ width:100%; }
+    .podium-row{ padding:8px 10px; }
+    .podium-name{ font-size:13px; }
+    .winner-trophy{ font-size:40px; }
+    .build-credit{ font-size:10px; }
+    .chat-messages{ height:200px; }
+    /* Bigger tap targets throughout on touch screens */
+    .btn, .copy-btn, .reaction-btn{ min-height:40px; }
+  }
+
   .board-wrap{ overflow-x:auto; position: relative; animation: fadeInUp .5s ease .12s both; scrollbar-width: thin; padding-bottom: 4px; text-align:center; }
   .board-wrap::-webkit-scrollbar{ display:block; height:8px; }
   .board-wrap::-webkit-scrollbar-thumb{ background: var(--line); border-radius:4px; }
@@ -288,7 +326,8 @@
   .turn-indicator{
     font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:13px;
     color: var(--muted);
-    display:inline-flex; align-items:center; gap:6px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    width:100%; text-align:center;
   }
   .turn-indicator.my-turn{ color: var(--gold); }
 
@@ -360,7 +399,7 @@
   .chat-section h2{ margin-bottom:10px; }
   .chat-messages{
     display:flex; flex-direction:column; gap:9px;
-    min-height:220px; max-height:440px; overflow-y:auto; padding-right:2px; margin-bottom:10px;
+    height:260px; overflow-y:auto; padding-right:2px; margin-bottom:10px;
     scrollbar-width: thin;
   }
   .chat-messages::-webkit-scrollbar{ display:block; width:6px; }
@@ -385,6 +424,7 @@
   }
   .chat-input-row input:focus{ outline:none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,183,5,0.15); }
   .chat-input-row .btn{ padding:9px 14px; font-size:15px; flex-shrink:0; }
+  .chat-input-row .btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
 
   .overlay{
     position: fixed; inset:0;
@@ -1815,6 +1855,9 @@ function resetRenderCaches(){
   seenChatIds = new Set();
   autoAdvanceScheduledForRound = null;
   winnerShownForRound = null;
+  lastChatSentAt = 0;
+  if(chatCooldownTimer){ clearTimeout(chatCooldownTimer); chatCooldownTimer = null; }
+  setChatSendEnabled(true);
   const winnerLayer = document.getElementById('winnerLayer');
   if(winnerLayer) winnerLayer.innerHTML = '';
 }
@@ -2008,6 +2051,7 @@ function migrateState(s){
   if(!Array.isArray(s.chat)) s.chat = [];
   if(!Array.isArray(s.turnOrder)) s.turnOrder = Object.keys(s.scores || {});
   if(typeof s.chooserIndex !== 'number') s.chooserIndex = 0;
+  Object.values(s.scores || {}).forEach(p => { if(typeof p.lastSeen !== 'number') p.lastSeen = Date.now(); });
   return s;
 }
 
@@ -2050,7 +2094,7 @@ async function ensureJoined(rawConfig){
         nameConflict = true;
         return undefined; // abort: no write, name already used by another player in this room
       }
-      next.scores[me.id] = { name: me.name, color: me.color, avatar: me.avatar, score: 0 };
+      next.scores[me.id] = { name: me.name, color: me.color, avatar: me.avatar, score: 0, lastSeen: Date.now() };
       if(!Array.isArray(next.turnOrder)) next.turnOrder = [];
       if(!next.turnOrder.includes(me.id)) next.turnOrder.push(me.id);
       if(!Array.isArray(next.chat)) next.chat = [];
@@ -2214,6 +2258,7 @@ function renderRoomBar(){
     document.getElementById('leaveLink').addEventListener('click', () => {
       room = null;
       if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+      stopHeartbeat();
       resetRenderCaches();
       showJoinPrompt();
     });
@@ -2419,12 +2464,17 @@ function renderScores(){
   }
   players.sort((a,b) => b.score - a.score);
   const topScore = players[0].score;
+  const now = Date.now();
   el.innerHTML = players.map((p, i) => {
     const isLeader = p.score > 0 && p.score === topScore;
+    const online = (now - (p.lastSeen || 0)) < PRESENCE_ONLINE_MS;
     return '<div class="player-row' + (isLeader ? ' leader' : '') + '">' +
         '<div class="player-name">' +
           '<span class="player-rank">' + (i+1) + '</span>' +
-          '<span class="player-avatar" style="background:' + p.color + '">' + escapeHtml(avatarGlyph(p)) + '</span>' +
+          '<span class="avatar-wrap">' +
+            '<span class="player-avatar" style="background:' + p.color + '">' + escapeHtml(avatarGlyph(p)) + '</span>' +
+            '<span class="presence-dot ' + (online ? 'online' : 'away') + '" title="' + (online ? 'En ligne' : 'Absent') + '"></span>' +
+          '</span>' +
           '<span>' + escapeHtml(p.name) + (p.id === me.id ? ' <span class="you-tag">(vous)</span>' : '') + (isLeader ? ' 👑' : '') + '</span>' +
         '</div>' +
         '<div class="player-score" data-id="' + p.id + '">' + p.score + '</div>' +
@@ -2506,7 +2556,15 @@ function renderOverlay(){
     } else {
       bodyHtml += '<button class="buzz-btn" id="buzzBtn">BUZZ</button>';
     }
-    bodyHtml += '<div class="row-actions" style="margin-top:18px;"><button class="btn ghost" id="skipBtn">Passer la question</button></div>';
+    // Only the very last player left who hasn't tried can skip outright — for
+    // everyone else, skipping would just end the question for the rest of the
+    // group, so the option only appears once it wouldn't change anything.
+    const totalPlayers = Object.keys(state.scores).length;
+    const remainingUntried = totalPlayers - a.tried.length;
+    const isLastToAnswer = !alreadyTried && remainingUntried <= 1;
+    if(isLastToAnswer){
+      bodyHtml += '<div class="row-actions" style="margin-top:18px;"><button class="btn ghost" id="skipBtn">Passer la question</button></div>';
+    }
   } else if(iBuzzed){
     bodyHtml +=
       '<div class="buzzed-info">C\'est à vous ! Tapez votre réponse.</div>' +
@@ -2649,12 +2707,27 @@ function renderChat(){
   el.scrollTop = el.scrollHeight;
 }
 
+const CHAT_COOLDOWN_MS = 2000;
+let lastChatSentAt = 0;
+let chatCooldownTimer = null;
+
+function setChatSendEnabled(enabled){
+  const btn = document.getElementById('chatSendBtn');
+  if(btn) btn.disabled = !enabled;
+}
+
 async function sendChat(text){
   const trimmed = (text || '').trim();
   if(!trimmed || !state) return;
+  const now = Date.now();
+  if(now - lastChatSentAt < CHAT_COOLDOWN_MS) return; // still cooling down, ignore
+  lastChatSentAt = now;
   const input = document.getElementById('chatInput');
   if(input) input.value = '';
   playSound('click');
+  setChatSendEnabled(false);
+  if(chatCooldownTimer) clearTimeout(chatCooldownTimer);
+  chatCooldownTimer = setTimeout(() => setChatSendEnabled(true), CHAT_COOLDOWN_MS);
   await mutateState(s => {
     if(!Array.isArray(s.chat)) s.chat = [];
     const msg = { id: uid(), playerId: me.id, name: me.name, color: me.color, avatar: me.avatar, text: trimmed.slice(0, 240), ts: Date.now() };
@@ -2801,7 +2874,7 @@ async function resetGame(skipConfirm){
     const config = s.config;
     const fresh = freshBoardState(config);
     Object.entries(s.scores).forEach(([id, p]) => {
-      fresh.scores[id] = { name: p.name, color: p.color, avatar: p.avatar, score: 0 };
+      fresh.scores[id] = { name: p.name, color: p.color, avatar: p.avatar, score: 0, lastSeen: p.lastSeen || Date.now() };
     });
     fresh.turnOrder = (Array.isArray(s.turnOrder) ? s.turnOrder : []).filter(id => fresh.scores[id]);
     Object.keys(fresh.scores).forEach(id => { if(!fresh.turnOrder.includes(id)) fresh.turnOrder.push(id); });
@@ -2813,6 +2886,28 @@ async function resetGame(skipConfirm){
     boardSig = null;
     return true;
   });
+}
+
+const PRESENCE_ONLINE_MS = 20000;
+let heartbeatTimer = null;
+
+async function sendHeartbeat(){
+  if(!state || !me) return;
+  await mutateState(s => {
+    if(!s.scores[me.id]) return false;
+    s.scores[me.id].lastSeen = Date.now();
+    return true;
+  });
+}
+
+function startHeartbeat(){
+  stopHeartbeat();
+  sendHeartbeat();
+  heartbeatTimer = setInterval(sendHeartbeat, 15000);
+}
+
+function stopHeartbeat(){
+  if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
 }
 
 function pollLoop(){
@@ -3223,6 +3318,7 @@ async function init(rawConfig){
   (state.chat || []).forEach(m => seenChatIds.add(m.id));
   renderAll();
   pollLoop();
+  startHeartbeat();
   return { nameConflict: false };
 }
 
