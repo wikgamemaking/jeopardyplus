@@ -280,6 +280,17 @@
   .cell.active-cell{
     animation: glowPulse 1.5s ease-in-out infinite;
   }
+  .board.not-my-turn .cell:not(.done){ cursor: not-allowed; opacity:.5; }
+  .board.not-my-turn .cell:not(.done):hover{
+    transform:none; background: var(--panel); border-color: var(--line); box-shadow: var(--shadow-card);
+  }
+
+  .turn-indicator{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:13px;
+    color: var(--muted);
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .turn-indicator.my-turn{ color: var(--gold); }
 
   .skeleton-block{
     background: linear-gradient(90deg, var(--panel) 25%, var(--panel-2) 50%, var(--panel) 75%) !important;
@@ -1855,6 +1866,15 @@ function playSound(name){
 
 function uid(){ return 'p' + Math.random().toString(36).slice(2,9); }
 
+function shuffledCategoryIndices(n){
+  const pool = CATEGORIES.map((_, i) => i);
+  for(let i = pool.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(n, CATEGORIES.length));
+}
+
 function randomRoomCode(len){
   let s = '';
   for(let i=0;i<len;i++) s += ROOM_CHARS[Math.floor(Math.random()*ROOM_CHARS.length)];
@@ -1877,13 +1897,62 @@ function freshBoardState(config){
   return {
     config: config,
     answered: CATEGORIES.map(c => c.clues.map(() => false)),
-    resolved: CATEGORIES.map(c => c.clues.map(tier => Math.floor(Math.random() * tier.pool.length))),
+    resolved: pickClueVariants(),
     scores: {},
     active: null,
     round: 0,
     started: false,
-    chat: []
+    chat: [],
+    // Whose turn it is to pick the next question (duel/co-op modes only).
+    turnOrder: [],
+    chooserIndex: 0
   };
+}
+
+// Remembers which clue variant was used last time for each category/tier slot
+// (per device, via localStorage) so freshly-created rooms avoid repeating the
+// same clue back-to-back — e.g. always landing on the same Tarantino question.
+const CLUE_HISTORY_KEY = 'duelquiz_clue_history_v1';
+function loadClueHistory(){
+  try{
+    const raw = localStorage.getItem(CLUE_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveClueHistory(h){
+  try{ localStorage.setItem(CLUE_HISTORY_KEY, JSON.stringify(h)); }catch(e){}
+}
+function pickClueVariants(){
+  const history = loadClueHistory();
+  const resolved = CATEGORIES.map((c, ci) => c.clues.map((tier, row) => {
+    const poolLen = tier.pool.length;
+    const key = ci + ':' + row;
+    let idx = Math.floor(Math.random() * poolLen);
+    if(poolLen > 1 && history[key] === idx){
+      // reroll away from last time's pick instead of allowing an immediate repeat
+      idx = (idx + 1 + Math.floor(Math.random() * (poolLen - 1))) % poolLen;
+    }
+    history[key] = idx;
+    return idx;
+  }));
+  saveClueHistory(history);
+  return resolved;
+}
+
+// Returns the id of the player whose turn it is to pick the next question, or
+// null if turn order isn't set up yet (e.g. legacy/solo state).
+function currentChooserId(s){
+  if(!s || !Array.isArray(s.turnOrder) || s.turnOrder.length === 0) return null;
+  const n = s.turnOrder.length;
+  const idx = ((s.chooserIndex || 0) % n + n) % n;
+  return s.turnOrder[idx];
+}
+
+function isMyTurnToChoose(){
+  if(!state) return false;
+  if(state.config.mode === 'solo') return true;
+  const chooser = currentChooserId(state);
+  return !chooser || chooser === me.id;
 }
 
 // Picks the clue variant chosen for this room/game for a given category+row.
@@ -1934,9 +2003,11 @@ async function saveState(s){
 function migrateState(s){
   if(!s) return s;
   if(!Array.isArray(s.resolved) || s.resolved.length !== CATEGORIES.length){
-    s.resolved = CATEGORIES.map(c => c.clues.map(tier => Math.floor(Math.random() * tier.pool.length)));
+    s.resolved = pickClueVariants();
   }
   if(!Array.isArray(s.chat)) s.chat = [];
+  if(!Array.isArray(s.turnOrder)) s.turnOrder = Object.keys(s.scores || {});
+  if(typeof s.chooserIndex !== 'number') s.chooserIndex = 0;
   return s;
 }
 
@@ -1980,6 +2051,8 @@ async function ensureJoined(rawConfig){
         return undefined; // abort: no write, name already used by another player in this room
       }
       next.scores[me.id] = { name: me.name, color: me.color, avatar: me.avatar, score: 0 };
+      if(!Array.isArray(next.turnOrder)) next.turnOrder = [];
+      if(!next.turnOrder.includes(me.id)) next.turnOrder.push(me.id);
       if(!Array.isArray(next.chat)) next.chat = [];
       next.chat.push({ id: uid(), type: 'system', playerId: me.id, name: me.name, text: 'a rejoint la partie', ts: Date.now() });
       if(next.chat.length > 60) next.chat = next.chat.slice(-60);
@@ -2074,20 +2147,21 @@ function checkAnswer(userInput, correctAnswer){
   if(user === core) return true;
   // ignore missing/extra spaces (e.g. "world war" vs "worldwar")
   if(user.replace(/\s+/g,'') === core.replace(/\s+/g,'')) return true;
-  if(core.length > 3 && (user.includes(core) || core.includes(user)) && user.length >= core.length * 0.4) return true;
+  // accept a short version of the answer (e.g. "Tarantino" for "Quentin Tarantino")
+  if(core.length > 2 && (user.includes(core) || core.includes(user)) && user.length >= core.length * 0.3) return true;
   const dist = levenshtein(user, core);
-  const threshold = Math.max(2, Math.ceil(core.length * 0.3));
+  const threshold = Math.max(2, Math.ceil(core.length * 0.35));
   if(dist <= threshold) return true;
   // word-level fallback: for multi-word answers, accept if most significant words match closely
-  const coreWords = core.split(' ').filter(w => w.length > 2);
+  const coreWords = core.split(' ').filter(w => w.length > 1);
   if(coreWords.length > 1){
     const userWords = user.split(' ').filter(Boolean);
     let matched = 0;
     coreWords.forEach(cw => {
-      const ok = userWords.some(uw => uw === cw || levenshtein(uw, cw) <= Math.max(1, Math.ceil(cw.length * 0.3)));
+      const ok = userWords.some(uw => uw === cw || levenshtein(uw, cw) <= Math.max(1, Math.ceil(cw.length * 0.35)));
       if(ok) matched++;
     });
-    if(matched / coreWords.length >= 0.7) return true;
+    if(matched / coreWords.length >= 0.6) return true;
   }
   return false;
 }
@@ -2178,6 +2252,18 @@ function renderRoundBanner(){
     html = '<span class="round-label">Manche ' + (state.round + 1) + ' / ' + rounds.length + '</span>';
   }
 
+  if(!allDone && !state.active && state.config.mode !== 'solo' && Object.keys(state.scores).length >= 2){
+    const chooser = currentChooserId(state);
+    if(chooser){
+      const isMe = chooser === me.id;
+      const chooserPlayer = state.scores[chooser];
+      const chooserName = chooserPlayer ? chooserPlayer.name : '?';
+      html += '<span class="turn-indicator' + (isMe ? ' my-turn' : '') + '">' +
+        (isMe ? '🎯 À vous de choisir une question' : '🎯 ' + escapeHtml(chooserName) + ' choisit la prochaine question') +
+        '</span>';
+    }
+  }
+
   if(allDone && !isLast){
     html += '<span class="round-complete auto-advance"><span class="mini-spinner"></span> Manche terminée — passage à la manche suivante…</span>';
     if(autoAdvanceScheduledForRound !== state.round){
@@ -2204,13 +2290,16 @@ function showWinnerModal(){
   players.sort((a, b) => b.score - a.score);
   const topScore = players[0].score;
   const winners = players.filter(p => p.score === topScore);
-  const isTie = winners.length > 1 && topScore > 0;
+  const isTie = winners.length > 1;
   const soloRecap = state.config.mode === 'solo';
 
   let headline, subline;
   if(soloRecap){
     headline = 'Partie terminée !';
     subline = 'Score final : ' + topScore + ' points.';
+  } else if(topScore === 0){
+    headline = 'Partie terminée !';
+    subline = "Personne n'a marqué de points cette partie.";
   } else if(isTie){
     headline = 'Égalité !';
     subline = winners.map(w => escapeHtml(w.name)).join(' & ') + ' terminent à égalité avec ' + topScore + ' points.';
@@ -2289,6 +2378,7 @@ function renderBoard(){
     board.querySelectorAll('.cell').forEach(cell => {
       cell.addEventListener('click', () => {
         if(cell.classList.contains('done')) return;
+        if(!isMyTurnToChoose()) return;
         selectClue(parseInt(cell.dataset.cat, 10), parseInt(cell.dataset.row, 10));
       });
     });
@@ -2308,6 +2398,8 @@ function renderBoard(){
     }
     cell.classList.toggle('active-cell', active);
   });
+
+  board.classList.toggle('not-my-turn', !state.active && !isMyTurnToChoose());
 
   const playerCount = Object.keys(state.scores).length;
   const locked = state.config.mode === 'duel' && playerCount < 2;
@@ -2419,15 +2511,10 @@ function renderOverlay(){
     bodyHtml +=
       '<div class="buzzed-info">C\'est à vous ! Tapez votre réponse.</div>' +
       '<div class="answer-form"><input type="text" id="answerInput" placeholder="Votre réponse" autocomplete="off" /><button class="btn cyan" id="submitBtn">Valider</button></div>' +
-      '<div class="row-actions"><button class="btn ghost" id="skipBtn">Passer la question</button></div>';
+      '<div class="row-actions"><button class="btn ghost" id="passTurnBtn">Passer la main</button></div>';
   } else {
     bodyHtml +=
-      '<div class="buzzed-info"><b>' + escapeHtml(buzzedPlayer ? buzzedPlayer.name : '?') + '</b> réfléchit à sa réponse...</div>' +
-      '<div class="row-actions">' +
-        '<button class="btn ghost" id="forceCorrectBtn">Forcer correct</button>' +
-        '<button class="btn ghost" id="forceIncorrectBtn">Forcer incorrect</button>' +
-        '<button class="btn ghost" id="skipBtn">Passer</button>' +
-      '</div>';
+      '<div class="buzzed-info"><b>' + escapeHtml(buzzedPlayer ? buzzedPlayer.name : '?') + '</b> réfléchit à sa réponse...</div>';
   }
 
   const showConfetti = a.decided && a.correct && lastCelebratedKey !== questionKey;
@@ -2456,12 +2543,10 @@ function renderOverlay(){
       answerInput.focus();
     }
   }
-  const forceCorrectBtn = document.getElementById('forceCorrectBtn');
-  if(forceCorrectBtn) forceCorrectBtn.addEventListener('click', () => forceDecision(true));
-  const forceIncorrectBtn = document.getElementById('forceIncorrectBtn');
-  if(forceIncorrectBtn) forceIncorrectBtn.addEventListener('click', () => forceDecision(false));
   const skipBtn = document.getElementById('skipBtn');
   if(skipBtn) skipBtn.addEventListener('click', skipQuestion);
+  const passTurnBtn = document.getElementById('passTurnBtn');
+  if(passTurnBtn) passTurnBtn.addEventListener('click', passTurn);
   const closeBtn = document.getElementById('closeBtn');
   if(closeBtn) closeBtn.addEventListener('click', closeQuestion);
 }
@@ -2583,14 +2668,22 @@ async function sendChat(text){
 
 async function selectClue(ci, row){
   if(!state || state.active) return; // cheap local guard to avoid a pointless round-trip
+  if(!isMyTurnToChoose()) return; // cheap local guard, transaction below is the real check
   await mutateState(s => {
     if(s.active) return false;
     if(s.answered[ci][row]) return false;
     const playerCount = Object.keys(s.scores).length;
     if(s.config.mode === 'duel' && playerCount < 2) return false;
     const solo = s.config.mode === 'solo';
+    if(!solo){
+      const chooser = currentChooserId(s);
+      if(chooser && chooser !== me.id) return false;
+    }
     s.active = newActive(ci, row, solo ? me.id : null);
     s.started = true;
+    if(!solo && Array.isArray(s.turnOrder) && s.turnOrder.length){
+      s.chooserIndex = ((s.chooserIndex || 0) + 1) % s.turnOrder.length;
+    }
     playSound('select');
     return true;
   });
@@ -2611,13 +2704,13 @@ async function submitAnswer(text){
     if(!s.active || s.active.buzzed !== me.id) return false;
     const clue = getClue(s, s.active.cat, s.active.row);
     const correct = checkAnswer(text || '', revealAnswer(clue.answer));
-    applyDecision(s, correct);
+    applyDecision(s, correct, false);
     return true;
   });
 }
 
-function applyDecision(s, correct){
-  playSound(correct ? 'correct' : 'incorrect');
+function applyDecision(s, correct, passed){
+  playSound(correct ? 'correct' : (passed ? 'click' : 'incorrect'));
   const a = s.active;
   const clue = getClue(s, a.cat, a.row);
   const playerName = s.scores[a.buzzed] ? s.scores[a.buzzed].name : 'Le joueur';
@@ -2639,15 +2732,19 @@ function applyDecision(s, correct){
       a.revealed = true;
       a.resultMsg = "Personne n'a trouvé la bonne réponse.";
     } else {
-      a.resultMsg = playerName + " s'est trompé, à un autre de tenter sa chance.";
+      a.resultMsg = passed
+        ? playerName + " passe la main, à un autre de tenter sa chance."
+        : playerName + " s'est trompé, à un autre de tenter sa chance.";
     }
   }
 }
 
-async function forceDecision(correct){
+// The player currently holding the buzzer gives up their own attempt only —
+// it opens the question back up for the others, it does not end the question.
+async function passTurn(){
   await mutateState(s => {
-    if(!s.active || !s.active.buzzed) return false;
-    applyDecision(s, correct);
+    if(!s.active || s.active.buzzed !== me.id) return false;
+    applyDecision(s, false, true);
     return true;
   });
 }
@@ -2706,6 +2803,9 @@ async function resetGame(skipConfirm){
     Object.entries(s.scores).forEach(([id, p]) => {
       fresh.scores[id] = { name: p.name, color: p.color, avatar: p.avatar, score: 0 };
     });
+    fresh.turnOrder = (Array.isArray(s.turnOrder) ? s.turnOrder : []).filter(id => fresh.scores[id]);
+    Object.keys(fresh.scores).forEach(id => { if(!fresh.turnOrder.includes(id)) fresh.turnOrder.push(id); });
+    fresh.chooserIndex = 0;
     fresh.chat = s.chat || [];
     Object.keys(s).forEach(k => delete s[k]);
     Object.assign(s, fresh);
@@ -2834,7 +2934,7 @@ function showJoinPrompt(){
 
   let selectedMode = 'duel';
   let selectedRounds = 1;
-  let selectedCategoryIndices = CATEGORIES.map((_, i) => i).slice(0, DEFAULT_CATEGORIES);
+  let selectedCategoryIndices = shuffledCategoryIndices(DEFAULT_CATEGORIES);
   const profile = {
     avatar: me && me.avatar ? me.avatar : EMOJI_AVATARS[Math.floor(Math.random()*EMOJI_AVATARS.length)],
     color: me && me.color ? me.color : PALETTE[Math.floor(Math.random()*PALETTE.length)]
@@ -2870,7 +2970,7 @@ function showJoinPrompt(){
       '</div>' +
       '<div class="field-label">Catégories <span class="cat-count" id="catCount"></span><button type="button" class="random-cats-btn" id="randomCatsBtn">🎲 Aléatoire</button></div>' +
       '<div class="cat-chips" id="catChips">' +
-        CATEGORIES.map((c, i) => '<button type="button" class="cat-chip' + (i < DEFAULT_CATEGORIES ? ' active' : '') + '" data-idx="' + i + '">' + escapeHtml(c.title) + '</button>').join('') +
+        CATEGORIES.map((c, i) => '<button type="button" class="cat-chip' + (selectedCategoryIndices.includes(i) ? ' active' : '') + '" data-idx="' + i + '">' + escapeHtml(c.title) + '</button>').join('') +
       '</div>' +
       '<div class="form-error" id="formError"></div>' +
       '<button class="btn gold" id="joinBtn" style="width:100%;">Rejoindre la salle</button>' +
@@ -2954,7 +3054,7 @@ function showJoinPrompt(){
       applyLockedConfig(data.config, Object.keys(data.scores).length);
     } else {
       releaseLockedConfig();
-      setRoomStatus('free', '✨ Ce code est libre — vous serez l\'hôte de cette salle.');
+      setRoomStatus('free', '✨ Ce code est libre, vous serez l\'hôte de cette salle.');
     }
   }
 
@@ -3055,12 +3155,7 @@ function showJoinPrompt(){
     });
   });
   document.getElementById('randomCatsBtn').addEventListener('click', () => {
-    const pool = CATEGORIES.map((_, i) => i);
-    for(let i = pool.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-    selectedCategoryIndices = pool.slice(0, Math.min(5, CATEGORIES.length));
+    selectedCategoryIndices = shuffledCategoryIndices(5);
     document.querySelectorAll('.cat-chip').forEach(btn => {
       const idx = parseInt(btn.dataset.idx, 10);
       btn.classList.toggle('active', selectedCategoryIndices.includes(idx));
@@ -3116,7 +3211,7 @@ async function init(rawConfig){
     showJoinPrompt();
     return;
   }
-  const result = await ensureJoined(rawConfig || { mode: 'duel', roundsCount: 1, categoryIndices: CATEGORIES.map((_,i)=>i).slice(0, DEFAULT_CATEGORIES) });
+  const result = await ensureJoined(rawConfig || { mode: 'duel', roundsCount: 1, categoryIndices: shuffledCategoryIndices(DEFAULT_CATEGORIES) });
   if(result.nameConflict){
     room = null;
     showJoinPrompt();
