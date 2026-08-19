@@ -246,6 +246,8 @@
     .room-box{ width:38px; height:44px; font-size:18px; }
     .row-actions{ flex-direction:column; }
     .row-actions .btn{ width:100%; }
+    .row-actions-auto.row-actions{ flex-direction:row; }
+    .row-actions-auto .btn{ width:auto; }
     .podium-row{ padding:8px 10px; }
     .podium-name{ font-size:13px; }
     .winner-trophy{ font-size:40px; }
@@ -409,6 +411,8 @@
   .chat-msg.system .chat-msg-system-text{ font-family:'Inter',sans-serif; }
   .chat-msg.system .chat-msg-system-text b{ color: var(--cyan); font-weight:600; }
   .chat-msg .player-avatar{ width:24px; height:24px; font-size:12px; margin-top:1px; }
+  .chat-msg.grouped{ margin-top:-5px; }
+  .chat-msg-avatar-spacer{ width:24px; flex-shrink:0; }
   .chat-msg-body{ min-width:0; flex:1; }
   .chat-msg-head{ display:flex; align-items:baseline; gap:6px; }
   .chat-msg-name{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:12px; color: var(--text); }
@@ -423,8 +427,12 @@
     transition: border-color .15s, box-shadow .15s;
   }
   .chat-input-row input:focus{ outline:none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,183,5,0.15); }
-  .chat-input-row .btn{ padding:9px 14px; font-size:15px; flex-shrink:0; }
-  .chat-input-row .btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+  .btn.chat-send-btn{
+    flex-shrink:0; width:40px; height:40px; padding:0; border-radius:50%;
+    font-size:15px; line-height:1;
+  }
+  .chat-send-btn svg{ width:16px; height:16px; margin-left:1px; }
+  .btn.chat-send-btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
 
   .overlay{
     position: fixed; inset:0;
@@ -718,7 +726,9 @@
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-row">
           <input type="text" id="chatInput" maxlength="240" placeholder="Écrire un message…" autocomplete="off" />
-          <button class="btn cyan" id="chatSendBtn" type="button" title="Envoyer">➤</button>
+          <button class="btn cyan chat-send-btn" id="chatSendBtn" type="button" title="Envoyer" aria-label="Envoyer">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.4 20.6L21 12 3.4 3.4 3 10l12 2-12 2 .4 6.6z" fill="currentColor"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -2259,6 +2269,7 @@ function renderRoomBar(){
       room = null;
       if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
       stopHeartbeat();
+      stopPresenceTicker();
       resetRenderCaches();
       showJoinPrompt();
     });
@@ -2563,7 +2574,7 @@ function renderOverlay(){
     const remainingUntried = totalPlayers - a.tried.length;
     const isLastToAnswer = !alreadyTried && remainingUntried <= 1;
     if(isLastToAnswer){
-      bodyHtml += '<div class="row-actions" style="margin-top:18px;"><button class="btn ghost" id="skipBtn">Passer la question</button></div>';
+      bodyHtml += '<div class="row-actions row-actions-auto" style="margin-top:18px;"><button class="btn ghost" id="skipBtn">Passer la question</button></div>';
     }
   } else if(iBuzzed){
     bodyHtml +=
@@ -2663,6 +2674,38 @@ function formatChatTime(ts){
   return hh + ':' + mm;
 }
 
+// Consecutive messages from the same player, sent under 15s apart, are
+// grouped visually (no repeated avatar/name/time) like a normal chat app.
+const CHAT_GROUP_WINDOW_MS = 15000;
+function chatShouldGroup(prev, m){
+  if(!prev || !m) return false;
+  if(prev.type === 'system' || m.type === 'system') return false;
+  if(prev.playerId !== m.playerId) return false;
+  return (m.ts - prev.ts) >= 0 && (m.ts - prev.ts) < CHAT_GROUP_WINDOW_MS;
+}
+
+function chatMsgHtml(m, grouped){
+  if(m.type === 'system'){
+    return '<div class="chat-msg system"><span class="chat-msg-system-text"><b>' + escapeHtml(m.name) + '</b> ' + escapeHtml(m.text) + '</span></div>';
+  }
+  const isMe = m.playerId === me.id;
+  if(grouped){
+    return '<div class="chat-msg grouped">' +
+      '<span class="chat-msg-avatar-spacer"></span>' +
+      '<div class="chat-msg-body">' +
+        '<div class="chat-msg-text">' + escapeHtml(m.text) + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  return '<div class="chat-msg">' +
+    '<span class="player-avatar" style="background:' + m.color + '">' + escapeHtml(m.avatar || (m.name || '?').charAt(0).toUpperCase()) + '</span>' +
+    '<div class="chat-msg-body">' +
+      '<div class="chat-msg-head"><span class="chat-msg-name' + (isMe ? ' me' : '') + '">' + escapeHtml(m.name) + (isMe ? ' (vous)' : '') + '</span><span class="chat-msg-time">' + formatChatTime(m.ts) + '</span></div>' +
+      '<div class="chat-msg-text">' + escapeHtml(m.text) + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
 function renderChat(){
   const el = document.getElementById('chatMessages');
   if(!el) return;
@@ -2683,25 +2726,39 @@ function renderChat(){
   if(hasNewJoin) playSound('join');
   else if(hasNewChatFromOther) playSound('chat');
 
+  const prevSig = chatSig;
   const sig = msgs.map(m => m.id).join(',');
-  if(chatSig === sig) return;
+  if(prevSig === sig) return;
   chatSig = sig;
 
   if(msgs.length === 0){
     el.innerHTML = '<div class="empty-note">Aucun message pour l\'instant. Dites bonjour 👋</div>';
+    return;
+  }
+
+  // Most of the time new messages just arrive on the end of the list, so
+  // only those need to be built and appended — rebuilding (and thus
+  // re-animating) every bubble already on screen on every single new
+  // message is what made the panel feel like it was constantly redrawing.
+  const prevIds = prevSig ? prevSig.split(',') : [];
+  const isAppendOnly = prevIds.length > 0 && msgs.length > prevIds.length &&
+    prevIds.every((id, i) => id === msgs[i].id);
+
+  if(isAppendOnly){
+    let lastMsg = msgs[prevIds.length - 1];
+    let html = '';
+    for(let i = prevIds.length; i < msgs.length; i++){
+      const m = msgs[i];
+      html += chatMsgHtml(m, chatShouldGroup(lastMsg, m));
+      lastMsg = m;
+    }
+    el.insertAdjacentHTML('beforeend', html);
   } else {
+    let prev = null;
     el.innerHTML = msgs.map(m => {
-      if(m.type === 'system'){
-        return '<div class="chat-msg system"><span class="chat-msg-system-text"><b>' + escapeHtml(m.name) + '</b> ' + escapeHtml(m.text) + '</span></div>';
-      }
-      const isMe = m.playerId === me.id;
-      return '<div class="chat-msg">' +
-        '<span class="player-avatar" style="background:' + m.color + '">' + escapeHtml(m.avatar || (m.name || '?').charAt(0).toUpperCase()) + '</span>' +
-        '<div class="chat-msg-body">' +
-          '<div class="chat-msg-head"><span class="chat-msg-name' + (isMe ? ' me' : '') + '">' + escapeHtml(m.name) + (isMe ? ' (vous)' : '') + '</span><span class="chat-msg-time">' + formatChatTime(m.ts) + '</span></div>' +
-          '<div class="chat-msg-text">' + escapeHtml(m.text) + '</div>' +
-        '</div>' +
-      '</div>';
+      const grouped = chatShouldGroup(prev, m);
+      prev = m;
+      return chatMsgHtml(m, grouped);
     }).join('');
   }
   el.scrollTop = el.scrollHeight;
@@ -2908,6 +2965,20 @@ function startHeartbeat(){
 
 function stopHeartbeat(){
   if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+}
+
+// The online/away dot is derived from lastSeen vs. the current clock, so it
+// needs to be re-evaluated on a steady local tick — otherwise it only ever
+// updates as a side effect of some other render (a score changing, a poll
+// picking up someone else's write), which meant a quiet room could sit with
+// a stale dot for a long time even though the underlying data was fine.
+let presenceTickTimer = null;
+function startPresenceTicker(){
+  stopPresenceTicker();
+  presenceTickTimer = setInterval(() => { if(state) renderScores(); }, 3000);
+}
+function stopPresenceTicker(){
+  if(presenceTickTimer){ clearInterval(presenceTickTimer); presenceTickTimer = null; }
 }
 
 function pollLoop(){
@@ -3319,6 +3390,7 @@ async function init(rawConfig){
   renderAll();
   pollLoop();
   startHeartbeat();
+  startPresenceTicker();
   return { nameConflict: false };
 }
 
